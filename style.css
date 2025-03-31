@@ -173,4 +173,122 @@ body {
 .collectible {
     animation: rotate 2s linear infinite;
 }
+
+/* Power-ups */
+.power-up {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.7));
+    animation: float 2s ease-in-out infinite;
+}
+
+.power-up.star {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,5 L61,39 L97,39 L68,61 L79,95 L50,73 L21,95 L32,61 L3,39 L39,39 Z" fill="%23FFD700"/></svg>');
+}
+
+.power-up.multiplier {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="70" font-size="60" text-anchor="middle" fill="%23FF4081">x2</text></svg>');
+}
+
+.power-up.slow {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%234CAF50"/><path d="M30,50 L70,50 M50,30 L50,70" stroke="white" stroke-width="8"/></svg>');
+}
+
+.power-up.magnet {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,20 L70,20 L70,60 C70,80 30,80 30,60 Z" fill="%23FF5722"/></svg>');
+}
+
+/* Effetti di stato */
+.invincible {
+    animation: invincible 0.5s infinite;
+}
+
+/* Particelle */
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: gold;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Level up message */
+.level-up-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    animation: levelUp 2s ease-out forwards;
+    z-index: 100;
+}
+
+/* Animazioni */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes invincible {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes levelUp {
+    0% { 
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Trail effect */
+.player-trail {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 182, 193, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: fadeOut 0.5s linear forwards;
+}
+
+@keyframes fadeOut {
+    to { 
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Score multiplier indicator */
+.score-multiplier {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    font-size: 24px;
+    color: #FF4081;
+    text-shadow: 0 0 5px rgba(255,64,129,0.5);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
   

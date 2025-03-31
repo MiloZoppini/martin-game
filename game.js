@@ -187,6 +187,39 @@ let collectibleInterval = null;
 let obstacleInterval = null;
 let gameItems = [];
 
+// Costanti di gioco
+const POWER_UP_TYPES = {
+    STAR: 'star',
+    MULTIPLIER: 'multiplier',
+    SLOW: 'slow',
+    MAGNET: 'magnet'
+};
+
+const GAME_LEVELS = {
+    1: { speed: 3, spawnRate: 2000, obstacleRate: 3000, powerUpChance: 0.1 },
+    2: { speed: 4, spawnRate: 1800, obstacleRate: 2800, powerUpChance: 0.15 },
+    3: { speed: 5, spawnRate: 1600, obstacleRate: 2600, powerUpChance: 0.2 },
+    4: { speed: 6, spawnRate: 1400, obstacleRate: 2400, powerUpChance: 0.25 },
+    5: { speed: 7, spawnRate: 1200, obstacleRate: 2200, powerUpChance: 0.3 }
+};
+
+// Variabili di stato
+let currentLevel = 1;
+let currentPowerUp = null;
+let isInvincible = false;
+let scoreMultiplier = 1;
+let isMagnetActive = false;
+let gameSpeed = GAME_LEVELS[1].speed;
+
+// Sistema audio
+const AUDIO = {
+    background: new Audio('./sounds/background.mp3'),
+    collect: new Audio('./sounds/collect.mp3'),
+    powerUp: new Audio('./sounds/powerup.mp3'),
+    hit: new Audio('./sounds/hit.mp3'),
+    levelUp: new Audio('./sounds/levelup.mp3')
+};
+
 // Funzione per avviare il gioco
 function startGame() {
     console.log("Avvio del gioco...");
@@ -196,8 +229,14 @@ function startGame() {
     // Resetta il gioco
     score = 0;
     lives = 3;
+    currentLevel = 1;
+    gameSpeed = GAME_LEVELS[1].speed;
     isGameRunning = true;
     gameItems = [];
+    
+    // Avvia la musica di sottofondo
+    AUDIO.background.loop = true;
+    AUDIO.background.play();
     
     // Inizializza posizione giocatore
     const gameWidth = window.innerWidth;
@@ -224,19 +263,30 @@ function startGame() {
 }
 
 function startSpawning() {
-    // Ferma eventuali interval precedenti
     if (collectibleInterval) clearInterval(collectibleInterval);
     if (obstacleInterval) clearInterval(obstacleInterval);
     
-    // Avvia lo spawn di collezionabili
-    collectibleInterval = setInterval(() => {
-        if (isGameRunning) spawnCollectible();
-    }, COLLECTIBLE_SPAWN_RATE);
+    function updateSpawnRates() {
+        const level = GAME_LEVELS[currentLevel];
+        
+        if (collectibleInterval) clearInterval(collectibleInterval);
+        if (obstacleInterval) clearInterval(obstacleInterval);
+        
+        collectibleInterval = setInterval(() => {
+            if (isGameRunning) {
+                spawnCollectible();
+                if (Math.random() < level.powerUpChance) {
+                    spawnPowerUp();
+                }
+            }
+        }, level.spawnRate);
+        
+        obstacleInterval = setInterval(() => {
+            if (isGameRunning) spawnObstacle();
+        }, level.obstacleRate);
+    }
     
-    // Avvia lo spawn di ostacoli
-    obstacleInterval = setInterval(() => {
-        if (isGameRunning) spawnObstacle();
-    }, OBSTACLE_SPAWN_RATE);
+    updateSpawnRates();
 }
 
 function spawnCollectible() {
@@ -307,22 +357,38 @@ function updateItems() {
     
     gameItems.forEach((item, index) => {
         // Aggiorna posizione
-        item.y += FALL_SPEED;
+        item.y += gameSpeed;
         item.element.style.top = item.y + 'px';
+        
+        // Effetto magnete
+        if (isMagnetActive && item.type === 'collectible') {
+            const dx = playerX + 80 - item.x;
+            const dy = (window.innerHeight - 200) - item.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 200) {
+                item.x += dx * 0.1;
+                item.y += dy * 0.1;
+                item.element.style.left = item.x + 'px';
+            }
+        }
         
         // Controlla collisioni
         if (checkCollision(item)) {
             if (item.type === 'collectible') {
-                score += 10;
+                score += 10 * scoreMultiplier;
                 updateScore();
-                playCollectSound();
-            } else if (item.type === 'obstacle') {
+                AUDIO.collect.play();
+                createCollectParticles(item.x, item.y);
+            } else if (item.type === 'obstacle' && !isInvincible) {
                 lives--;
                 updateLives();
                 showDamageAnimation();
+                AUDIO.hit.play();
                 if (lives <= 0) {
                     gameOver();
                 }
+            } else if (item.type === 'powerUp') {
+                activatePowerUp(item.powerUpType);
             }
             itemsToRemove.push(index);
         }
@@ -888,56 +954,54 @@ function showDivineEffect() {
 }
 
 // Funzione per spawnare il powerup
-function spawnPowerup() {
-  if (!isGameRunning) return;
+function spawnPowerUp() {
+  if (Math.random() > GAME_LEVELS[currentLevel].powerUpChance) return;
   
-  // Crea il powerup del limone
-  const powerup = document.createElement("div");
-  powerup.classList.add("powerup");
-  powerup.classList.add("lemon-powerup");
+  const type = Object.values(POWER_UP_TYPES)[Math.floor(Math.random() * 4)];
+  const powerUp = document.createElement('div');
+  powerUp.className = `power-up ${type}`;
+  const x = Math.random() * (window.innerWidth - 40);
+  powerUp.style.left = x + 'px';
+  powerUp.style.top = '0px';
+  gameArea.appendChild(powerUp);
   
-  // Dimensioni del powerup
-  const width = 50;
-  const height = 50;
-  powerup.style.width = width + 'px';
-  powerup.style.height = height + 'px';
-  
-  // Posiziona l'elemento
-  const x = Math.floor(Math.random() * (800 - width));
-  powerup.style.left = x + "px";
-  gameArea.appendChild(powerup);
-  
-  let y = 0;
-  const fall = setInterval(() => {
-    if (!isGameRunning) {
-      clearInterval(fall);
-      powerup.remove();
-      return;
+  gameItems.push({
+      element: powerUp,
+      type: 'powerUp',
+      powerUpType: type,
+      x: x,
+      y: 0
+  });
+}
+
+function activatePowerUp(type) {
+    AUDIO.powerUp.play();
+    switch(type) {
+        case POWER_UP_TYPES.STAR:
+            isInvincible = true;
+            player.classList.add('invincible');
+            setTimeout(() => {
+                isInvincible = false;
+                player.classList.remove('invincible');
+            }, 5000);
+            break;
+            
+        case POWER_UP_TYPES.MULTIPLIER:
+            scoreMultiplier = 2;
+            setTimeout(() => scoreMultiplier = 1, 10000);
+            break;
+            
+        case POWER_UP_TYPES.SLOW:
+            const originalSpeed = gameSpeed;
+            gameSpeed = gameSpeed / 2;
+            setTimeout(() => gameSpeed = originalSpeed, 7000);
+            break;
+            
+        case POWER_UP_TYPES.MAGNET:
+            isMagnetActive = true;
+            setTimeout(() => isMagnetActive = false, 8000);
+            break;
     }
-    
-    y += 6; // Velocità di caduta media
-    powerup.style.top = y + "px";
-    
-    // Controlla collisione con il giocatore
-    if (y > 450 && y < 500 && checkCollision(playerX, x, width)) {
-      // Attiva la modalità super
-      startSuperMode();
-      
-      // Effetto visuale per il powerup raccolto
-      createParticleEffect(x + width/2, y, "#FFFF00", "SUPER LIMONE!");
-      
-      clearInterval(fall);
-      powerup.remove();
-    }
-    
-    if (y > 500) {
-      clearInterval(fall);
-      powerup.remove();
-    }
-  }, 20);
-  
-  // Spawna un nuovo powerup dopo un lungo tempo casuale (più raro dei collezionabili)
-  setTimeout(spawnPowerup, Math.random() * 20000 + 15000); // Tra 15 e 35 secondi
 }
 
 // Funzione per aggiornare lo stato del bottone delle vite extra
@@ -1155,4 +1219,58 @@ function handlePlayTouch(e) {
     console.log("Touch rilevato sul pulsante play");
     e.preventDefault(); // Previeni eventi click duplicati
     startGame();
+}
+
+// Gestione del livello
+function updateLevel() {
+    const nextLevel = Math.floor(score / 100) + 1;
+    if (nextLevel <= 5 && nextLevel !== currentLevel) {
+        currentLevel = nextLevel;
+        gameSpeed = GAME_LEVELS[currentLevel].speed;
+        AUDIO.levelUp.play();
+        showLevelUpMessage();
+        updateSpawnRates();
+    }
+}
+
+function showLevelUpMessage() {
+    const message = document.createElement('div');
+    message.className = 'level-up-message';
+    message.textContent = `Livello ${currentLevel}!`;
+    gameArea.appendChild(message);
+    setTimeout(() => message.remove(), 2000);
+}
+
+// Effetti particellari
+function createCollectParticles(x, y) {
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        
+        const angle = (Math.random() * Math.PI * 2);
+        const velocity = Math.random() * 5 + 2;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        gameArea.appendChild(particle);
+        
+        let frame = 0;
+        const animate = () => {
+            frame++;
+            const newX = x + vx * frame;
+            const newY = y + vy * frame + 0.5 * frame * frame;
+            particle.style.left = newX + 'px';
+            particle.style.top = newY + 'px';
+            particle.style.opacity = 1 - frame / 30;
+            
+            if (frame < 30) {
+                requestAnimationFrame(animate);
+            } else {
+                particle.remove();
+            }
+        };
+        requestAnimationFrame(animate);
+    }
 }
