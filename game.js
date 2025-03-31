@@ -30,7 +30,6 @@ let isMoving = false;
 let lastDirection = 'right';
 let isGameRunning = true;
 let isInvulnerable = false;
-let isTouchDevice = false;
 let isSuperMode = false; // Stato modalità super
 let superModeTimer = null; // Timer per la modalità super
 let lastMillion = 0; // Per tenere traccia dell'ultimo milione raggiunto
@@ -57,9 +56,7 @@ const powerUpTypes = {
 };
 
 // Rileva se il dispositivo è touch
-function detectTouchDevice() {
-  isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
-}
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 // Aggiungi questa variabile in cima al file, dopo le altre variabili
 const DEBUG_MODE = false; // Imposta a true per visualizzare la hitbox
@@ -1190,4 +1187,51 @@ function createPowerUpButton(type) {
   
   button.onclick = () => purchasePowerUp(type);
   return button;
+}
+
+// Gestione dei controlli touch
+const leftControl = document.getElementById('leftControl');
+const rightControl = document.getElementById('rightControl');
+let isMovingLeft = false;
+let isMovingRight = false;
+
+// Funzione per gestire il movimento touch
+function handleTouchStart(direction) {
+    if (direction === 'left') {
+        isMovingLeft = true;
+        isMovingRight = false;
+    } else {
+        isMovingRight = true;
+        isMovingLeft = false;
+    }
+}
+
+function handleTouchEnd() {
+    isMovingLeft = false;
+    isMovingRight = false;
+}
+
+// Aggiungi eventi touch
+leftControl.addEventListener('touchstart', () => handleTouchStart('left'));
+leftControl.addEventListener('touchend', handleTouchEnd);
+rightControl.addEventListener('touchstart', () => handleTouchStart('right'));
+rightControl.addEventListener('touchend', handleTouchEnd);
+
+// Modifica la funzione movePlayer per usare i controlli touch
+function movePlayer() {
+    if (!isGameRunning) return;
+
+    if (isMovingLeft || (keys.ArrowLeft && !isTouchDevice)) {
+        playerX = Math.max(0, playerX - playerSpeed);
+    }
+    if (isMovingRight || (keys.ArrowRight && !isTouchDevice)) {
+        playerX = Math.min(gameArea.offsetWidth - player.offsetWidth, playerX + playerSpeed);
+    }
+
+    player.style.left = playerX + 'px';
+}
+
+// Rimuovi i controlli freccia se è un dispositivo touch
+if (isTouchDevice) {
+    document.querySelectorAll('.arrow-button').forEach(button => button.remove());
 }
