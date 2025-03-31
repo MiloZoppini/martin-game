@@ -1,3 +1,4 @@
+// Elementi DOM essenziali
 const gameArea = document.getElementById("gameArea");
 const player = document.getElementById("player");
 const dog = document.getElementById("dog");
@@ -13,21 +14,21 @@ const shopOverlay = document.getElementById("shopOverlay");
 const closeShopButton = document.querySelector(".close-shop");
 const betaTestButton = document.getElementById("betaTestButton");
 
+// Variabili di gioco
 let score = 0;
 let lives = 3;
 let extraLivesAvailable = 3; // Numero di vite extra disponibili
 let playerX = 320;
 let dogX = playerX - 50;
 let keysPressed = {
-  left: false,
-  right: false,
+    left: false,
+    right: false
 };
 const speed = 5;
-let playerSpeed = speed; // Velocità attuale del giocatore
+let playerSpeed = speed;
 let playerDirection = 'right';
 let isMoving = false;
-let lastDirection = 'right';
-let isGameRunning = true;
+let isGameRunning = false;
 let isInvulnerable = false;
 let isTouchDevice = false;
 let isSuperMode = false; // Stato modalità super
@@ -57,13 +58,10 @@ const powerUpTypes = {
 
 // Rileva se il dispositivo è touch
 function detectTouchDevice() {
-  isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
-  
-  console.log("Rilevamento dispositivo touch:", { 
-    ontouchstart: 'ontouchstart' in window,
-    maxTouchPoints: navigator.maxTouchPoints,
-    msMaxTouchPoints: navigator.msMaxTouchPoints 
-  });
+    isTouchDevice = ('ontouchstart' in window) || 
+                   (navigator.maxTouchPoints > 0) || 
+                   (navigator.msMaxTouchPoints > 0);
+    console.log("Dispositivo touch:", isTouchDevice);
 }
 
 // Aggiungi questa variabile in cima al file, dopo le altre variabili
@@ -181,96 +179,6 @@ function removeSuperModeTimer() {
   }
 }
 
-// Inizializza il menu e i listener
-function initGame() {
-  // Rimuovi il tutorial
-  const tutorialElement = document.getElementById('tutorial');
-  if (tutorialElement) {
-    tutorialElement.remove();
-  }
-
-  // Aggiungi il fullscreen su mobile
-  function goFullScreen() {
-    const element = document.documentElement;
-    if (element.requestFullscreen) {
-      element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) {
-      element.webkitRequestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-      element.mozRequestFullScreen();
-    } else if (element.msRequestFullscreen) {
-      element.msRequestFullscreen();
-    }
-  }
-
-  // Gestione touch migliorata
-  if (isTouchDevice) {
-    document.addEventListener('touchstart', goFullScreen, { once: true });
-    
-    // Previeni lo zoom su doppio tap
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(event) {
-      const now = (new Date()).getTime();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
-
-    // Previeni lo scroll
-    document.addEventListener('touchmove', function(event) {
-      if (event.target.closest('#gameArea')) {
-        event.preventDefault();
-      }
-    }, { passive: false });
-  }
-
-  // Rileva se il dispositivo è touch
-  detectTouchDevice();
-  
-  // Nascondi gli elementi di gioco
-  gameArea.style.display = "none";
-  
-  // Mostra il menu
-  menuScreen.style.display = "flex";
-  
-  // Aggiungi event listener ai pulsanti di avvio
-  playButton.addEventListener("click", startGame);
-  
-  // Inizializza le vite
-  updateLives();
-  
-  // Aggiungi listener per i pulsanti di movimento
-  setupMovementControls();
-}
-
-// Configura i controlli di movimento touch
-function setupMovementControls() {
-  // Eventi touch per il pulsante sinistro
-  moveLeftButton.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    keysPressed.left = true;
-    playerDirection = 'left';
-  });
-  
-  moveLeftButton.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    keysPressed.left = false;
-  });
-  
-  // Eventi touch per il pulsante destro
-  moveRightButton.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    keysPressed.right = true;
-    playerDirection = 'right';
-  });
-  
-  moveRightButton.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    keysPressed.right = false;
-  });
-}
-
 // Funzione per avviare il gioco
 function startGame() {
     console.log("Avvio del gioco...");
@@ -288,8 +196,14 @@ function startGame() {
     dogX = playerX - 50;
     
     // Posiziona il player e il cane
-    if (player) player.style.left = playerX + "px";
-    if (dog) dog.style.left = dogX + "px";
+    if (player) {
+        player.style.left = playerX + "px";
+        player.style.transform = 'scaleX(1)';
+    }
+    if (dog) {
+        dog.style.left = dogX + "px";
+        dog.style.transform = 'scaleX(-1)';
+    }
     
     // Aggiorna interfaccia
     updateScore();
@@ -358,16 +272,156 @@ function movePlayer() {
     updateDogPosition();
 }
 
-// Funzione per aggiornare le vite visualizzate
-function updateLives() {
-  if (livesDisplay) {
-    let heartsDisplay = "";
-    for (let i = 0; i < lives; i++) {
-      heartsDisplay += "❤️";
+// Funzione per aggiornare l'animazione del player
+function updatePlayerAnimation() {
+    if (!player || !dog) return;
+    
+    if (playerDirection === 'left') {
+        player.style.transform = 'scaleX(-1)';
+        dog.style.transform = 'scaleX(1)';
+    } else {
+        player.style.transform = 'scaleX(1)';
+        dog.style.transform = 'scaleX(-1)';
     }
-    livesDisplay.textContent = heartsDisplay;
-  }
 }
+
+// Funzione per aggiornare la posizione del cane
+function updateDogPosition() {
+    if (!dog) return;
+    
+    // Calcola la posizione target del cane
+    let targetDogX = playerDirection === 'left' ? 
+        playerX + 160 + 20 : // Il cane sta a destra
+        playerX - 60;        // Il cane sta a sinistra
+    
+    // Assicurati che il cane rimanga nell'area di gioco
+    targetDogX = Math.max(0, Math.min(window.innerWidth - 40, targetDogX));
+    
+    // Movimento graduale
+    dogX = dogX + (targetDogX - dogX) * 0.1;
+    dog.style.left = dogX + "px";
+}
+
+// Funzioni di utility
+function updateScore() {
+    if (scoreDisplay) {
+        scoreDisplay.textContent = "Score: " + score;
+    }
+}
+
+function updateLives() {
+    if (livesDisplay) {
+        let heartsDisplay = "";
+        for (let i = 0; i < lives; i++) {
+            heartsDisplay += "❤️";
+        }
+        livesDisplay.textContent = heartsDisplay;
+    }
+}
+
+// Setup controlli touch
+function setupMovementControls() {
+    if (!moveLeftButton || !moveRightButton) return;
+    
+    // Eventi touch per il pulsante sinistro
+    moveLeftButton.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        keysPressed.left = true;
+    });
+    
+    moveLeftButton.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        keysPressed.left = false;
+    });
+    
+    // Eventi touch per il pulsante destro
+    moveRightButton.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        keysPressed.right = true;
+    });
+    
+    moveRightButton.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        keysPressed.right = false;
+    });
+    
+    // Mouse click per desktop
+    moveLeftButton.addEventListener("mousedown", () => {
+        keysPressed.left = true;
+    });
+    
+    moveLeftButton.addEventListener("mouseup", () => {
+        keysPressed.left = false;
+    });
+    
+    moveRightButton.addEventListener("mousedown", () => {
+        keysPressed.right = true;
+    });
+    
+    moveRightButton.addEventListener("mouseup", () => {
+        keysPressed.right = false;
+    });
+}
+
+// Gestione eventi tastiera
+document.addEventListener("keydown", (e) => {
+    if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        keysPressed.left = true;
+    }
+    if (e.code === "KeyD" || e.code === "ArrowRight") {
+        keysPressed.right = true;
+    }
+});
+
+document.addEventListener("keyup", (e) => {
+    if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        keysPressed.left = false;
+    }
+    if (e.code === "KeyD" || e.code === "ArrowRight") {
+        keysPressed.right = false;
+    }
+});
+
+// Inizializzazione all'avvio
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM caricato, inizializzazione gioco...");
+    
+    // Rileva se il dispositivo è touch
+    detectTouchDevice();
+    
+    // Verifica elementi essenziali
+    if (!menuScreen || !gameArea || !playButton) {
+        console.error("Elementi essenziali mancanti:", {
+            menuScreen: !!menuScreen,
+            gameArea: !!gameArea,
+            playButton: !!playButton
+        });
+        return;
+    }
+    
+    console.log("Elementi essenziali trovati, configurazione pulsante play...");
+    
+    // Setup pulsante play (sia click che touch)
+    playButton.onclick = startGame;
+    
+    if (isTouchDevice) {
+        // Aggiungi gestione touch
+        playButton.addEventListener("touchstart", function(e) {
+            console.log("Touch rilevato sul pulsante play");
+            e.preventDefault();
+            startGame();
+        });
+    }
+    
+    // Setup controlli movimento
+    setupMovementControls();
+    
+    // Mostra menu iniziale
+    menuScreen.style.display = "flex";
+    gameArea.style.display = "none";
+    
+    console.log("Inizializzazione completata");
+});
 
 // Funzione per attivare l'animazione di danno
 function damageAnimation() {
@@ -435,85 +489,6 @@ function createOfficeItems() {
     
     gameArea.appendChild(item);
   }
-}
-
-// Inizializzazione
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM caricato, inizializzazione gioco...");
-    
-    // Rileva se il dispositivo è touch
-    isTouchDevice = ('ontouchstart' in window) || 
-                   (navigator.maxTouchPoints > 0) || 
-                   (navigator.msMaxTouchPoints > 0);
-    
-    console.log("È un dispositivo touch:", isTouchDevice);
-    
-    // Verifica elementi essenziali
-    if (!menuScreen || !gameArea || !playButton) {
-        console.error("Elementi essenziali mancanti:", {
-            menuScreen: !!menuScreen,
-            gameArea: !!gameArea,
-            playButton: !!playButton
-        });
-        return;
-    }
-    
-    // Setup pulsante play
-    playButton.addEventListener("click", startGame);
-    playButton.addEventListener("touchstart", function(e) {
-        e.preventDefault();
-        startGame();
-    });
-    
-    // Setup controlli movimento
-    setupMovementControls();
-    
-    // Mostra menu iniziale
-    menuScreen.style.display = "flex";
-    gameArea.style.display = "none";
-});
-
-// Funzione per aggiornare l'animazione del player
-function updatePlayerAnimation() {
-    if (!player || !dog) return;
-    
-    // Rimuovi tutte le classi di animazione
-    player.classList.remove('running-left', 'running-right');
-    dog.classList.remove('dog-running-left', 'dog-running-right');
-    
-    if (isMoving) {
-        if (playerDirection === 'left') {
-            player.style.transform = 'scaleX(-1)';
-            dog.style.transform = 'scaleX(1)';
-        } else {
-            player.style.transform = 'scaleX(1)';
-            dog.style.transform = 'scaleX(-1)';
-        }
-    }
-}
-
-// Funzione per aggiornare la posizione del cane
-function updateDogPosition() {
-    if (!dog) return;
-    
-    // Calcola la posizione target del cane
-    let targetDogX = playerDirection === 'left' ? 
-        playerX + 160 + 20 : // Il cane sta a destra
-        playerX - 60;        // Il cane sta a sinistra
-    
-    // Assicurati che il cane rimanga nell'area di gioco
-    targetDogX = Math.max(0, Math.min(window.innerWidth - 40, targetDogX));
-    
-    // Movimento graduale
-    dogX = dogX + (targetDogX - dogX) * 0.1;
-    dog.style.left = dogX + "px";
-}
-
-// Funzioni di utility
-function updateScore() {
-    if (scoreDisplay) {
-        scoreDisplay.textContent = "Score: " + score;
-    }
 }
 
 // Tipi di denaro raccoglibile
