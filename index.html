@@ -10,83 +10,20 @@
 </head>
 <body>
   <div id="gameContainer">
-    <h1 id="gameTitle">Martin in Ufficio</h1>
-    
     <!-- Menu di avvio -->
     <div id="menuScreen">
-      <h2>Martin in Ufficio</h2>
-      <div class="menu-buttons">
-        <button id="startButton">Inizia a Giocare</button>
-      </div>
-      <div id="instructions" style="margin-top: 10px; background-color: rgba(255, 255, 255, 0.8);">
-        <p>Usa i tasti <kbd>A</kbd> e <kbd>D</kbd> per muovere Martin</p>
-        <p>Raccogli monete 🪙, banconote 💶 e sacchi di denaro 💰</p>
-        <p>Cerca il raro oggetto divino ✨ che vale 500K€!</p>
-        <p>Raccogli il limone 🍋 per diventare SUPER MARTIN per 10 secondi!</p>
-        <p>Evita i cartelli di pericolo ⚠️ mentre il tuo cagnolino ti segue!</p>
-        <p><small>Monete = 1K€, Banconote = 10K€, Sacchi = 25K€, Pacchi = 50K€, Sacchi grandi = 100K€, God = 500K€</small></p>
-      </div>
+      <h1>Martin in Ufficio</h1>
       <button id="playButton">
         <div class="play-icon"></div>
       </button>
     </div>
     
-    <!-- Barra di stato del gioco -->
-    <div id="gameStatus">
-      <div id="score">Punteggio: 0€</div>
-      <div id="lives"></div>
-    </div>
-    
     <!-- Area di gioco -->
     <div id="gameArea">
-      <button id="betaTestButton">Beta Test: +1M€ & Vite</button>
+      <div id="score">0€</div>
+      <div id="lives"></div>
       <div id="player"></div>
       <div id="dog"></div>
-      <button id="extraLivesButton" title="Aggiungi una vita extra"></button>
-      
-      <!-- Shop -->
-      <div class="shop" id="shop">
-        <div class="shop-item" data-item="speed">
-          <img src="images/speed.png" alt="Velocità">
-          <span class="price">500K€</span>
-        </div>
-        <div class="shop-item" data-item="shield">
-          <img src="images/shield.png" alt="Scudo">
-          <span class="price">1M€</span>
-        </div>
-        <div class="shop-item" data-item="magnet">
-          <img src="images/magnet.png" alt="Magnete">
-          <span class="price">1.5M€</span>
-        </div>
-      </div>
-      
-      <!-- Shop Overlay -->
-      <div class="shop-overlay" id="shopOverlay">
-        <div class="shop-modal">
-          <button class="close-shop">&times;</button>
-          <h2>Shop di Martin</h2>
-          <div class="shop-grid">
-            <div class="shop-item-card" data-item="speed">
-              <img src="images/speed.png" alt="Velocità">
-              <div class="name">Velocità Extra</div>
-              <div class="price">500K€</div>
-              <div class="description">Aumenta la velocità di movimento del 50% per 30 secondi</div>
-            </div>
-            <div class="shop-item-card" data-item="shield">
-              <img src="images/shield.png" alt="Scudo">
-              <div class="name">Scudo Protettivo</div>
-              <div class="price">1M€</div>
-              <div class="description">Ti rende invulnerabile per 20 secondi</div>
-            </div>
-            <div class="shop-item-card" data-item="magnet">
-              <img src="images/magnet.png" alt="Magnete">
-              <div class="name">Magnete</div>
-              <div class="price">1.5M€</div>
-              <div class="description">Attira tutti i collezionabili verso di te per 15 secondi</div>
-            </div>
-          </div>
-        </div>
-      </div>
       
       <!-- Bottoni di controllo del movimento -->
       <div class="control-buttons">
@@ -97,16 +34,6 @@
           <div class="move-right-icon"></div>
         </button>
       </div>
-    </div>
-    
-    <!-- Istruzioni (sotto l'area di gioco) -->
-    <div id="instructions">
-      <p>Usa i tasti <kbd>A</kbd> e <kbd>D</kbd> per muovere Martin</p>
-      <p>Raccogli monete 🪙, banconote 💶 e sacchi di denaro 💰</p>
-      <p>Cerca il raro oggetto divino ✨ che vale 500K€!</p>
-      <p>Raccogli il limone 🍋 per diventare SUPER MARTIN per 10 secondi!</p>
-      <p>Evita i cartelli di pericolo ⚠️ mentre il tuo cagnolino ti segue!</p>
-      <p><small>Monete = 1K€, Banconote = 10K€, Sacchi = 25K€, Pacchi = 50K€, Sacchi grandi = 100K€, God = 500K€</small></p>
     </div>
   </div>
   <script src="game.js"></script>
