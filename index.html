@@ -2,38 +2,30 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Martin in Ufficio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Martin Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="gameContainer">
-    <!-- Menu di avvio -->
-    <div id="menuScreen">
-      <h1>Martin in Ufficio</h1>
-      <button id="playButton">
-        <div class="play-icon"></div>
-      </button>
-    </div>
+  <div id="menuScreen">
+    <button id="playButton" aria-label="Inizia il gioco">
+      <div class="play-icon"></div>
+    </button>
+  </div>
+  
+  <div id="gameArea">
+    <div id="score">Score: 0</div>
+    <div id="lives">Lives: 3</div>
+    <div id="player"></div>
+    <div id="dog"></div>
     
-    <!-- Area di gioco -->
-    <div id="gameArea">
-      <div id="score">0€</div>
-      <div id="lives"></div>
-      <div id="player"></div>
-      <div id="dog"></div>
-      
-      <!-- Bottoni di controllo del movimento -->
-      <div class="control-buttons">
-        <button id="moveLeftButton" class="move-button">
-          <div class="move-left-icon"></div>
-        </button>
-        <button id="moveRightButton" class="move-button">
-          <div class="move-right-icon"></div>
-        </button>
-      </div>
+    <div class="control-buttons">
+      <button class="move-button" id="moveLeftButton" aria-label="Muovi a sinistra">
+        <div class="move-left-icon"></div>
+      </button>
+      <button class="move-button" id="moveRightButton" aria-label="Muovi a destra">
+        <div class="move-right-icon"></div>
+      </button>
     </div>
   </div>
   <script src="game.js"></script>

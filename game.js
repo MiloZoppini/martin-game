@@ -336,52 +336,19 @@ function setupMovementControls() {
 
 // Funzione per avviare il gioco
 function startGame() {
-  // Nascondi il menu
   menuScreen.style.display = "none";
-  
-  // Mostra il gioco
   gameArea.style.display = "block";
   
-  // Inizializza le variabili
+  // Resetta il gioco
   score = 0;
   lives = 3;
-  extraLivesAvailable = 3; // Reset delle vite extra disponibili
-  playerX = 320;
+  playerX = window.innerWidth / 2;
   dogX = playerX - 50;
-  keysPressed.left = false;
-  keysPressed.right = false;
-  isMoving = false;
-  isGameRunning = true;
-  isSuperMode = false;
-  isInvulnerable = false;
-  playerSpeed = speed;
-  lastMillion = 0; // Reset del contatore dei milioni
-  
-  // Reimposta l'immagine del player
-  player.style.backgroundImage = "url('images/Martin.png')";
-  
-  // Posiziona il cane inizialmente
-  dog.style.left = dogX + "px";
-  
-  // Interrompi eventuali timer o effetti
-  if (superModeTimer) clearTimeout(superModeTimer);
-  stopScreenShake();
-  removeSuperModeTimer();
-  
-  // Aggiorna lo stato del bottone delle vite extra
-  updateExtraLivesButton();
-  
-  // Avvia il gioco
-  createOfficeItems();
   updateScore();
   updateLives();
-  startGameLoop();
-  spawnCollectible();
-  spawnPowerup();
   
-  setTimeout(() => {
-    spawnObstacle();
-  }, 3000);
+  // Avvia il loop di gioco
+  startGameLoop();
 }
 
 // Funzione per aggiornare le vite visualizzate
@@ -1233,3 +1200,6 @@ function createPowerUpButton(type) {
   button.onclick = () => purchasePowerUp(type);
   return button;
 }
+
+// Inizializza il gioco all'avvio
+document.addEventListener('DOMContentLoaded', initGame);
