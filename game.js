@@ -4,7 +4,6 @@ const dog = document.getElementById("dog");
 const scoreDisplay = document.getElementById("score");
 const livesDisplay = document.getElementById("lives");
 const menuScreen = document.getElementById("menuScreen");
-const startButton = document.getElementById("startButton");
 const playButton = document.getElementById("playButton");
 const moveLeftButton = document.getElementById("moveLeftButton");
 const moveRightButton = document.getElementById("moveRightButton");
@@ -236,7 +235,6 @@ function initGame() {
   menuScreen.style.display = "flex";
   
   // Aggiungi event listener ai pulsanti di avvio
-  startButton.addEventListener("click", startGame);
   playButton.addEventListener("click", startGame);
   
   // Inizializza le vite
@@ -248,95 +246,28 @@ function initGame() {
 
 // Configura i controlli di movimento touch
 function setupMovementControls() {
-  // Eventi per il pulsante sinistro
-  moveLeftButton.addEventListener("mousedown", () => {
-    keysPressed.left = true;
-    playerDirection = 'left';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
-  });
-  
-  moveLeftButton.addEventListener("mouseup", () => {
-    keysPressed.left = false;
-    if (!keysPressed.right) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  });
-  
-  moveLeftButton.addEventListener("mouseleave", () => {
-    keysPressed.left = false;
-    if (!keysPressed.right) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  });
-  
-  // Eventi per il pulsante destro
-  moveRightButton.addEventListener("mousedown", () => {
-    keysPressed.right = true;
-    playerDirection = 'right';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
-  });
-  
-  moveRightButton.addEventListener("mouseup", () => {
-    keysPressed.right = false;
-    if (!keysPressed.left) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  });
-  
-  moveRightButton.addEventListener("mouseleave", () => {
-    keysPressed.right = false;
-    if (!keysPressed.left) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  });
-  
-  // Eventi touch per dispositivi mobili
+  // Eventi touch per il pulsante sinistro
   moveLeftButton.addEventListener("touchstart", (e) => {
     e.preventDefault();
     keysPressed.left = true;
     playerDirection = 'left';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
   });
   
   moveLeftButton.addEventListener("touchend", (e) => {
     e.preventDefault();
     keysPressed.left = false;
-    if (!keysPressed.right) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
   });
   
+  // Eventi touch per il pulsante destro
   moveRightButton.addEventListener("touchstart", (e) => {
     e.preventDefault();
     keysPressed.right = true;
     playerDirection = 'right';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
   });
   
   moveRightButton.addEventListener("touchend", (e) => {
     e.preventDefault();
     keysPressed.right = false;
-    if (!keysPressed.left) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
   });
 }
 
@@ -353,7 +284,7 @@ function startGame() {
     
     // Inizializza posizione giocatore
     const gameWidth = window.innerWidth;
-    playerX = gameWidth / 2 - 80; // Metà schermo meno metà larghezza del player
+    playerX = gameWidth / 2 - 80;
     dogX = playerX - 50;
     
     // Posiziona il player e il cane
@@ -367,10 +298,6 @@ function startGame() {
     // Avvia il loop di gioco
     console.log("Loop di gioco avviato");
     startGameLoop();
-    
-    // Avvia la generazione di collezionabili e ostacoli
-    spawnCollectible();
-    spawnObstacle();
 }
 
 // Loop principale del gioco
@@ -510,171 +437,83 @@ function createOfficeItems() {
   }
 }
 
-// Event listeners per la tastiera
-document.addEventListener("keydown", (e) => {
-  if (!isGameRunning) return;
-  
-  if (e.code === "KeyA") {
-    keysPressed.left = true;
-    playerDirection = 'left';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
-  }
-  if (e.code === "KeyD") {
-    keysPressed.right = true;
-    playerDirection = 'right';
-    if (!isMoving) {
-      isMoving = true;
-      updatePlayerAnimation();
-    }
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  if (!isGameRunning) return;
-  
-  if (e.code === "KeyA") {
-    keysPressed.left = false;
-    if (!keysPressed.right) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  }
-  if (e.code === "KeyD") {
-    keysPressed.right = false;
-    if (!keysPressed.left) {
-      isMoving = false;
-      updatePlayerAnimation();
-    }
-  }
-});
-
-function updatePlayerAnimation() {
-  // Rimuovi tutte le classi di animazione
-  player.classList.remove('running-left', 'running-right');
-  dog.classList.remove('dog-running-left', 'dog-running-right');
-  
-  if (isMoving) {
-    if (playerDirection === 'left') {
-      player.classList.add('running-left');
-      lastDirection = 'left';
-      // Il cane si muove nella direzione opposta
-      dog.classList.add('dog-running-right');
-    } else {
-      player.classList.add('running-right');
-      lastDirection = 'right';
-      // Il cane si muove nella direzione opposta
-      dog.classList.add('dog-running-left');
-    }
-  } else {
-    // Solo la rotazione quando fermo
-    player.style.transform = lastDirection === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
-  }
-}
-
-// Funzione per controllare le collisioni con lo shop
-function checkShopCollision() {
-  if (!isGameRunning) return;
-  
-  const shopRect = shop.getBoundingClientRect();
-  const playerRect = player.getBoundingClientRect();
-  
-  // Verifica se c'è una collisione tra il player e lo shop
-  if (playerRect.right > shopRect.left && 
-      playerRect.left < shopRect.right && 
-      playerRect.bottom > shopRect.top && 
-      playerRect.top < shopRect.bottom && 
-      shop.classList.contains('visible')) {
-    openShopOverlay();
-  }
-}
-
-// Modifica la funzione movePlayer per includere il controllo delle collisioni con lo shop
-function movePlayer() {
-  if (!isGameRunning) return;
-  
-  let moved = false;
-  
-  if (keysPressed.left && playerX > 0) {
-    playerX -= playerSpeed;
-    moved = true;
-  }
-  if (keysPressed.right && playerX < 640) { 
-    playerX += playerSpeed;
-    moved = true;
-  }
-  
-  // Aggiorna lo stato di movimento
-  if (moved !== isMoving) {
-    isMoving = moved;
-    updatePlayerAnimation();
-  }
-  
-  // Aggiorna la posizione di Martin
-  player.style.left = playerX + "px";
-  
-  // Aggiorna la posizione del cane
-  updateDogPosition();
-  
-  // Controlla le collisioni con lo shop
-  checkShopCollision();
-  
-  // Aggiorna la posizione della hitbox se in debug mode
-  if (DEBUG_MODE && hitboxElement) {
-    const playerWidth = 80;
-    const playerCenterOffset = 40;
-    const playerLeft = playerX + playerCenterOffset;
+// Inizializzazione
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM caricato, inizializzazione gioco...");
     
-    hitboxElement.style.left = playerLeft + "px";
-    hitboxElement.style.bottom = "10px";
-    hitboxElement.style.width = playerWidth + "px";
-    hitboxElement.style.height = "100px";
-  }
+    // Rileva se il dispositivo è touch
+    isTouchDevice = ('ontouchstart' in window) || 
+                   (navigator.maxTouchPoints > 0) || 
+                   (navigator.msMaxTouchPoints > 0);
+    
+    console.log("È un dispositivo touch:", isTouchDevice);
+    
+    // Verifica elementi essenziali
+    if (!menuScreen || !gameArea || !playButton) {
+        console.error("Elementi essenziali mancanti:", {
+            menuScreen: !!menuScreen,
+            gameArea: !!gameArea,
+            playButton: !!playButton
+        });
+        return;
+    }
+    
+    // Setup pulsante play
+    playButton.addEventListener("click", startGame);
+    playButton.addEventListener("touchstart", function(e) {
+        e.preventDefault();
+        startGame();
+    });
+    
+    // Setup controlli movimento
+    setupMovementControls();
+    
+    // Mostra menu iniziale
+    menuScreen.style.display = "flex";
+    gameArea.style.display = "none";
+});
+
+// Funzione per aggiornare l'animazione del player
+function updatePlayerAnimation() {
+    if (!player || !dog) return;
+    
+    // Rimuovi tutte le classi di animazione
+    player.classList.remove('running-left', 'running-right');
+    dog.classList.remove('dog-running-left', 'dog-running-right');
+    
+    if (isMoving) {
+        if (playerDirection === 'left') {
+            player.style.transform = 'scaleX(-1)';
+            dog.style.transform = 'scaleX(1)';
+        } else {
+            player.style.transform = 'scaleX(1)';
+            dog.style.transform = 'scaleX(-1)';
+        }
+    }
 }
 
+// Funzione per aggiornare la posizione del cane
 function updateDogPosition() {
-  // Calcola la posizione target del cane
-  let targetDogX;
-  
-  if (playerDirection === 'left') {
-    // Il cane dovrebbe stare a destra di Martin
-    targetDogX = playerX + 160 + 20; // Ridotta la distanza per non allontanarsi troppo
-    if (!isMoving) {
-      dog.style.transform = 'scaleX(-1)';
-    }
-  } else {
-    // Il cane dovrebbe stare a sinistra di Martin
-    targetDogX = playerX - 60; // Ridotta la distanza per non allontanarsi troppo
-    if (!isMoving) {
-      dog.style.transform = 'scaleX(1)';
-    }
-  }
-  
-  // Assicurati che il cane rimanga nell'area di gioco
-  targetDogX = Math.max(0, Math.min(760, targetDogX));
-  
-  // Movimento graduale invece di una transizione istantanea
-  dogX = dogX + (targetDogX - dogX) * 0.1;
-  dog.style.left = dogX + "px";
+    if (!dog) return;
+    
+    // Calcola la posizione target del cane
+    let targetDogX = playerDirection === 'left' ? 
+        playerX + 160 + 20 : // Il cane sta a destra
+        playerX - 60;        // Il cane sta a sinistra
+    
+    // Assicurati che il cane rimanga nell'area di gioco
+    targetDogX = Math.max(0, Math.min(window.innerWidth - 40, targetDogX));
+    
+    // Movimento graduale
+    dogX = dogX + (targetDogX - dogX) * 0.1;
+    dog.style.left = dogX + "px";
 }
 
-// Funzione per formattare i numeri con K e M
-function formatNumber(num) {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
-  }
-  return num.toString();
-}
-
-// Funzione per aggiornare il punteggio
+// Funzioni di utility
 function updateScore() {
-  if (scoreDisplay) {
-    scoreDisplay.textContent = "Score: " + score;
-  }
+    if (scoreDisplay) {
+        scoreDisplay.textContent = "Score: " + score;
+    }
 }
 
 // Tipi di denaro raccoglibile
@@ -1268,46 +1107,6 @@ function createPowerUpButton(type) {
   button.onclick = () => purchasePowerUp(type);
   return button;
 }
-
-// Inizializza il gioco all'avvio
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM caricato, inizializzazione gioco...");
-    // Rileva se il dispositivo è touch
-    detectTouchDevice();
-    console.log("È un dispositivo touch:", isTouchDevice);
-    
-    // Assicuriamoci che tutti gli elementi esistano
-    if (!menuScreen || !gameArea || !playButton) {
-        console.error("Elementi essenziali mancanti:", {
-            menuScreen: !!menuScreen,
-            gameArea: !!gameArea,
-            playButton: !!playButton
-        });
-        return;
-    }
-    
-    // Event listener per il pulsante play (sia click che touch)
-    if (playButton) {
-        console.log("Aggiungo event listener al pulsante play");
-        // Rimuovi event listener esistenti per sicurezza
-        playButton.removeEventListener("click", startGame);
-        playButton.removeEventListener("touchstart", handlePlayTouch);
-        
-        // Aggiungi event listener per mouse
-        playButton.addEventListener("click", startGame);
-        
-        // Aggiungi event listener per touch
-        playButton.addEventListener("touchstart", handlePlayTouch);
-    }
-    
-    // Mostra il menu e nascondi l'area di gioco
-    menuScreen.style.display = "flex";
-    gameArea.style.display = "none";
-    
-    if (typeof initGame === 'function') {
-        initGame();
-    }
-});
 
 // Funzione per gestire il touch sul pulsante play
 function handlePlayTouch(e) {
