@@ -179,6 +179,14 @@ function removeSuperModeTimer() {
   }
 }
 
+// Costanti per il gioco
+const COLLECTIBLE_SPAWN_RATE = 2000; // Ogni 2 secondi
+const OBSTACLE_SPAWN_RATE = 3000;    // Ogni 3 secondi
+const FALL_SPEED = 3;
+let collectibleInterval = null;
+let obstacleInterval = null;
+let gameItems = [];
+
 // Funzione per avviare il gioco
 function startGame() {
     console.log("Avvio del gioco...");
@@ -189,6 +197,7 @@ function startGame() {
     score = 0;
     lives = 3;
     isGameRunning = true;
+    gameItems = [];
     
     // Inizializza posizione giocatore
     const gameWidth = window.innerWidth;
@@ -209,18 +218,67 @@ function startGame() {
     updateScore();
     updateLives();
     
-    // Avvia il loop di gioco
-    console.log("Loop di gioco avviato");
+    // Avvia il loop di gioco e gli spawn
     startGameLoop();
+    startSpawning();
 }
 
-// Loop principale del gioco
-let animationFrame = null;
+function startSpawning() {
+    // Ferma eventuali interval precedenti
+    if (collectibleInterval) clearInterval(collectibleInterval);
+    if (obstacleInterval) clearInterval(obstacleInterval);
+    
+    // Avvia lo spawn di collezionabili
+    collectibleInterval = setInterval(() => {
+        if (isGameRunning) spawnCollectible();
+    }, COLLECTIBLE_SPAWN_RATE);
+    
+    // Avvia lo spawn di ostacoli
+    obstacleInterval = setInterval(() => {
+        if (isGameRunning) spawnObstacle();
+    }, OBSTACLE_SPAWN_RATE);
+}
 
+function spawnCollectible() {
+    const collectible = document.createElement('div');
+    collectible.className = 'collectible';
+    const x = Math.random() * (window.innerWidth - 40);
+    collectible.style.left = x + 'px';
+    collectible.style.top = '0px';
+    gameArea.appendChild(collectible);
+    
+    const item = {
+        element: collectible,
+        type: 'collectible',
+        x: x,
+        y: 0
+    };
+    
+    gameItems.push(item);
+}
+
+function spawnObstacle() {
+    const obstacle = document.createElement('div');
+    obstacle.className = 'obstacle';
+    const x = Math.random() * (window.innerWidth - 40);
+    obstacle.style.left = x + 'px';
+    obstacle.style.top = '0px';
+    gameArea.appendChild(obstacle);
+    
+    const item = {
+        element: obstacle,
+        type: 'obstacle',
+        x: x,
+        y: 0
+    };
+    
+    gameItems.push(item);
+}
+
+// Aggiorna il loop di gioco per includere gli items
 function startGameLoop() {
     console.log("Inizializzazione loop di gioco");
     
-    // Cancella eventuali loop precedenti
     if (animationFrame) {
         cancelAnimationFrame(animationFrame);
     }
@@ -234,72 +292,81 @@ function startGameLoop() {
         // Aggiorna la posizione del giocatore
         movePlayer();
         
+        // Aggiorna gli items
+        updateItems();
+        
         // Continua il loop
         animationFrame = requestAnimationFrame(gameLoop);
     }
     
-    // Avvia il loop
     animationFrame = requestAnimationFrame(gameLoop);
 }
 
-// Funzione per muovere il giocatore
-function movePlayer() {
-    if (!isGameRunning) return;
+function updateItems() {
+    const itemsToRemove = [];
     
-    let moved = false;
+    gameItems.forEach((item, index) => {
+        // Aggiorna posizione
+        item.y += FALL_SPEED;
+        item.element.style.top = item.y + 'px';
+        
+        // Controlla collisioni
+        if (checkCollision(item)) {
+            if (item.type === 'collectible') {
+                score += 10;
+                updateScore();
+                playCollectSound();
+            } else if (item.type === 'obstacle') {
+                lives--;
+                updateLives();
+                showDamageAnimation();
+                if (lives <= 0) {
+                    gameOver();
+                }
+            }
+            itemsToRemove.push(index);
+        }
+        
+        // Rimuovi se fuori schermo
+        if (item.y > window.innerHeight) {
+            itemsToRemove.push(index);
+        }
+    });
     
-    if (keysPressed.left && playerX > 0) {
-        playerX -= playerSpeed;
-        moved = true;
-        playerDirection = 'left';
-    }
-    if (keysPressed.right && playerX < window.innerWidth - 160) {
-        playerX += playerSpeed;
-        moved = true;
-        playerDirection = 'right';
-    }
-    
-    // Aggiorna lo stato di movimento
-    if (moved !== isMoving) {
-        isMoving = moved;
-        updatePlayerAnimation();
-    }
-    
-    // Aggiorna la posizione di Martin
-    if (player) player.style.left = playerX + "px";
-    
-    // Aggiorna la posizione del cane
-    updateDogPosition();
+    // Rimuovi gli items
+    itemsToRemove.reverse().forEach(index => {
+        const item = gameItems[index];
+        item.element.remove();
+        gameItems.splice(index, 1);
+    });
 }
 
-// Funzione per aggiornare l'animazione del player
-function updatePlayerAnimation() {
-    if (!player || !dog) return;
+function checkCollision(item) {
+    const playerRect = player.getBoundingClientRect();
+    const itemRect = item.element.getBoundingClientRect();
     
-    if (playerDirection === 'left') {
-        player.style.transform = 'scaleX(-1)';
-        dog.style.transform = 'scaleX(1)';
-    } else {
-        player.style.transform = 'scaleX(1)';
-        dog.style.transform = 'scaleX(-1)';
-    }
+    return !(playerRect.right < itemRect.left || 
+             playerRect.left > itemRect.right || 
+             playerRect.bottom < itemRect.top || 
+             playerRect.top > itemRect.bottom);
 }
 
-// Funzione per aggiornare la posizione del cane
-function updateDogPosition() {
-    if (!dog) return;
+function gameOver() {
+    isGameRunning = false;
+    if (collectibleInterval) clearInterval(collectibleInterval);
+    if (obstacleInterval) clearInterval(obstacleInterval);
     
-    // Calcola la posizione target del cane
-    let targetDogX = playerDirection === 'left' ? 
-        playerX + 160 + 20 : // Il cane sta a destra
-        playerX - 60;        // Il cane sta a sinistra
+    // Rimuovi tutti gli items
+    gameItems.forEach(item => item.element.remove());
+    gameItems = [];
     
-    // Assicurati che il cane rimanga nell'area di gioco
-    targetDogX = Math.max(0, Math.min(window.innerWidth - 40, targetDogX));
-    
-    // Movimento graduale
-    dogX = dogX + (targetDogX - dogX) * 0.1;
-    dog.style.left = dogX + "px";
+    // Mostra il menu
+    menuScreen.style.display = "flex";
+    gameArea.style.display = "none";
+}
+
+function playCollectSound() {
+    // Implementa il suono di raccolta se necessario
 }
 
 // Funzioni di utility
