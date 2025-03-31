@@ -2,15 +2,27 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Martin Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="menuScreen">
-    <button id="playButton" aria-label="Inizia il gioco">
-      <div class="play-icon"></div>
-    </button>
+    <h1>Martin Game</h1>
+    <div class="menu-buttons">
+      <button id="playButton" class="menu-button" onclick="startGame()">
+        <div class="play-icon"></div>
+        Gioca
+      </button>
+      <button id="storyButton" class="menu-button" onclick="startStoryMode()">
+        <div class="story-icon"></div>
+        Modalità Storia
+      </button>
+      <button id="multiplayerButton" class="menu-button" onclick="startMultiplayerMode()">
+        <div class="multiplayer-icon"></div>
+        Multiplayer
+      </button>
+    </div>
   </div>
   
   <div id="gameArea">

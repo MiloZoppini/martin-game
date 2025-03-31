@@ -291,4 +291,310 @@ body {
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+
+/* Boss Styles */
+.boss {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 5;
+}
+
+.boss.gatto_cattivo {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23333"/><circle cx="35" cy="40" r="5" fill="yellow"/><circle cx="65" cy="40" r="5" fill="yellow"/><path d="M30,60 Q50,70 70,60" stroke="red" fill="none" stroke-width="3"/></svg>');
+}
+
+.boss.gufo_saggio {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23855E42"/><circle cx="35" cy="40" r="15" fill="white"/><circle cx="65" cy="40" r="15" fill="white"/><circle cx="35" cy="40" r="5" fill="black"/><circle cx="65" cy="40" r="5" fill="black"/><path d="M30,70 Q50,80 70,70" stroke="%23593D2B" fill="none" stroke-width="3"/></svg>');
+}
+
+.boss.yeti {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="white"/><circle cx="35" cy="40" r="5" fill="black"/><circle cx="65" cy="40" r="5" fill="black"/><path d="M30,60 Q50,70 70,60" stroke="black" fill="none" stroke-width="3"/></svg>');
+}
+
+.boss.re_nuvola {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20,50 Q35,20 50,50 Q65,20 80,50 Q95,80 50,80 Q5,80 20,50" fill="%234A90E2"/><circle cx="35" cy="45" r="5" fill="white"/><circle cx="65" cy="45" r="5" fill="white"/><path d="M40,60 Q50,70 60,60" stroke="white" fill="none" stroke-width="3"/></svg>');
+}
+
+/* Boss Health Bar */
+#bossHealth {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    text-align: center;
+    z-index: 100;
+}
+
+.health-bar {
+    width: 100%;
+    height: 20px;
+    background: #333;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.health-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #ff0000, #ff4444);
+    transition: width 0.3s ease;
+}
+
+.boss-name {
+    color: white;
+    font-size: 24px;
+    margin-top: 5px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Boss Attacks */
+.boss-attack {
+    position: absolute;
+    z-index: 4;
+}
+
+.boss-attack.slash {
+    width: 100px;
+    height: 100px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,90 L90,10" stroke="%23ff0000" stroke-width="10" stroke-linecap="round"/></svg>');
+}
+
+/* Chapter Intro */
+.chapter-intro {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+}
+
+.chapter-intro h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #FFD700;
+}
+
+.chapter-intro p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.chapter-intro button {
+    font-size: 24px;
+    padding: 15px 30px;
+    background: #4CAF50;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.chapter-intro button:hover {
+    transform: scale(1.1);
+}
+
+/* Victory Message */
+.victory-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    animation: victoryPulse 1s infinite;
+}
+
+@keyframes victoryPulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.2); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Game Complete Screen */
+.game-complete {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.game-complete h1 {
+    font-size: 48px;
+    color: #FFD700;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.game-complete p {
+    font-size: 24px;
+    color: white;
+    margin-bottom: 40px;
+}
+
+.game-complete button {
+    font-size: 24px;
+    padding: 15px 30px;
+    background: #4CAF50;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.game-complete button:hover {
+    transform: scale(1.1);
+}
+
+/* Multiplayer Styles */
+.multiplayer-lobby {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+    min-width: 400px;
+}
+
+.multiplayer-lobby h2 {
+    font-size: 36px;
+    margin-bottom: 30px;
+    color: #4CAF50;
+}
+
+.player-list {
+    margin-bottom: 30px;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.ready-status {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.other-player {
+    position: absolute;
+    bottom: 10px;
+    width: 160px;
+    height: 200px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><circle cx="50" cy="40" r="35" fill="%23FF6B6B"/><rect x="15" y="75" width="70" height="60" fill="%234B6584"/><circle cx="35" cy="35" r="5" fill="black"/><circle cx="65" cy="35" r="5" fill="black"/><path d="M35,50 Q50,60 65,50" stroke="black" fill="none" stroke-width="3"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    z-index: 9;
+    opacity: 0.7;
+}
+
+.player-name-tag {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.score-board {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    min-width: 200px;
+}
+
+.score-entry {
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    margin-bottom: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.multiplayer-results {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+    min-width: 400px;
+}
+
+.multiplayer-results h2 {
+    font-size: 36px;
+    margin-bottom: 30px;
+    color: #4CAF50;
+}
+
+.results-list {
+    margin-bottom: 30px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.result-item.winner {
+    background: rgba(76, 175, 80, 0.3);
+    border: 2px solid #4CAF50;
+}
+
+.result-item span:first-child {
+    font-weight: bold;
+    color: #FFD700;
+}
   

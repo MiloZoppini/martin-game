@@ -1274,3 +1274,476 @@ function createCollectParticles(x, y) {
         requestAnimationFrame(animate);
     }
 }
+
+// Costanti per la storia e i boss
+const STORY_CHAPTERS = {
+    1: {
+        title: "L'Inizio dell'Avventura",
+        intro: "Martin e il suo fedele cane iniziano la loro avventura...",
+        boss: "GATTO_CATTIVO",
+        requiredScore: 100
+    },
+    2: {
+        title: "La Foresta Misteriosa",
+        intro: "Addentrandosi nella foresta, incontrano nuove sfide...",
+        boss: "GUFO_SAGGIO",
+        requiredScore: 250
+    },
+    3: {
+        title: "Le Montagne Ghiacciate",
+        intro: "Il freddo delle montagne mette alla prova i nostri eroi...",
+        boss: "YETI",
+        requiredScore: 500
+    },
+    4: {
+        title: "Il Castello nel Cielo",
+        intro: "Finalmente raggiungono il leggendario castello...",
+        boss: "RE_NUVOLA",
+        requiredScore: 1000
+    }
+};
+
+const BOSS_DATA = {
+    GATTO_CATTIVO: {
+        name: "Gatto Cattivo",
+        health: 100,
+        attacks: ["graffiata", "palla_pelo", "miagolio_sonico"],
+        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del gatto --></svg>'
+    },
+    GUFO_SAGGIO: {
+        name: "Gufo Saggio",
+        health: 150,
+        attacks: ["piuma_taglienti", "tornado", "grido_notturno"],
+        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del gufo --></svg>'
+    },
+    YETI: {
+        name: "Yeti delle Nevi",
+        health: 200,
+        attacks: ["palla_neve", "tempesta", "ruggito_gelido"],
+        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG dello yeti --></svg>'
+    },
+    RE_NUVOLA: {
+        name: "Re delle Nuvole",
+        health: 300,
+        attacks: ["fulmine", "tornado_celeste", "pioggia_stellare"],
+        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del re --></svg>'
+    }
+};
+
+// Variabili di stato per la storia
+let currentChapter = 1;
+let isBossFight = false;
+let currentBoss = null;
+let bossHealth = 0;
+let isStoryMode = false;
+
+// Funzione per iniziare la modalità storia
+function startStoryMode() {
+    isStoryMode = true;
+    currentChapter = 1;
+    showChapterIntro(currentChapter);
+}
+
+function showChapterIntro(chapter) {
+    const chapterData = STORY_CHAPTERS[chapter];
+    const intro = document.createElement('div');
+    intro.className = 'chapter-intro';
+    intro.innerHTML = `
+        <h2>${chapterData.title}</h2>
+        <p>${chapterData.intro}</p>
+        <button onclick="startChapter(${chapter})">Inizia Capitolo</button>
+    `;
+    gameArea.appendChild(intro);
+}
+
+function startChapter(chapter) {
+    const chapterData = STORY_CHAPTERS[chapter];
+    document.querySelector('.chapter-intro')?.remove();
+    score = 0;
+    lives = 3;
+    startGame();
+}
+
+function checkStoryProgress() {
+    if (!isStoryMode) return;
+    
+    const currentChapterData = STORY_CHAPTERS[currentChapter];
+    if (score >= currentChapterData.requiredScore && !isBossFight) {
+        startBossFight(currentChapterData.boss);
+    }
+}
+
+function startBossFight(bossType) {
+    isBossFight = true;
+    const bossData = BOSS_DATA[bossType];
+    currentBoss = bossType;
+    bossHealth = bossData.health;
+    
+    // Ferma il normale spawn di oggetti
+    clearInterval(collectibleInterval);
+    clearInterval(obstacleInterval);
+    
+    // Crea il boss
+    const boss = document.createElement('div');
+    boss.id = 'boss';
+    boss.className = 'boss ' + bossType.toLowerCase();
+    gameArea.appendChild(boss);
+    
+    // Mostra la barra della vita del boss
+    const healthBar = document.createElement('div');
+    healthBar.id = 'bossHealth';
+    healthBar.innerHTML = `
+        <div class="health-bar">
+            <div class="health-fill"></div>
+        </div>
+        <div class="boss-name">${bossData.name}</div>
+    `;
+    gameArea.appendChild(healthBar);
+    
+    // Inizia il pattern di attacco del boss
+    startBossAttackPattern(bossType);
+}
+
+function startBossAttackPattern(bossType) {
+    const bossData = BOSS_DATA[bossType];
+    let attackIndex = 0;
+    
+    const attackInterval = setInterval(() => {
+        if (!isBossFight) {
+            clearInterval(attackInterval);
+            return;
+        }
+        
+        const attack = bossData.attacks[attackIndex];
+        executeBossAttack(attack);
+        attackIndex = (attackIndex + 1) % bossData.attacks.length;
+    }, 2000);
+}
+
+function executeBossAttack(attackType) {
+    switch(attackType) {
+        case "graffiata":
+            createSlashAttack();
+            break;
+        case "palla_pelo":
+            createHairballAttack();
+            break;
+        case "miagolio_sonico":
+            createSonicAttack();
+            break;
+        // Implementa altri attacchi qui
+    }
+}
+
+function createSlashAttack() {
+    const slash = document.createElement('div');
+    slash.className = 'boss-attack slash';
+    const bossElement = document.getElementById('boss');
+    const bossRect = bossElement.getBoundingClientRect();
+    
+    slash.style.left = bossRect.left + 'px';
+    slash.style.top = bossRect.top + 'px';
+    gameArea.appendChild(slash);
+    
+    // Animazione dell'attacco
+    const animation = slash.animate([
+        { transform: 'translateX(0) rotate(0deg)' },
+        { transform: 'translateX(300px) rotate(180deg)' }
+    ], {
+        duration: 1000,
+        easing: 'ease-out'
+    });
+    
+    animation.onfinish = () => slash.remove();
+}
+
+function damagePlayer() {
+    if (!isInvincible) {
+        lives--;
+        updateLives();
+        showDamageAnimation();
+        if (lives <= 0) {
+            gameOver();
+        }
+    }
+}
+
+function damageBoss(damage) {
+    bossHealth -= damage;
+    updateBossHealthBar();
+    
+    if (bossHealth <= 0) {
+        completeBossFight();
+    }
+}
+
+function updateBossHealthBar() {
+    const healthFill = document.querySelector('.health-fill');
+    const bossData = BOSS_DATA[currentBoss];
+    const healthPercentage = (bossHealth / bossData.health) * 100;
+    healthFill.style.width = healthPercentage + '%';
+}
+
+function completeBossFight() {
+    isBossFight = false;
+    document.getElementById('boss')?.remove();
+    document.getElementById('bossHealth')?.remove();
+    
+    // Mostra animazione di vittoria
+    showVictoryAnimation();
+    
+    // Passa al prossimo capitolo
+    currentChapter++;
+    if (STORY_CHAPTERS[currentChapter]) {
+        setTimeout(() => showChapterIntro(currentChapter), 2000);
+    } else {
+        showGameComplete();
+    }
+}
+
+function showVictoryAnimation() {
+    const victory = document.createElement('div');
+    victory.className = 'victory-message';
+    victory.textContent = 'Boss Sconfitto!';
+    gameArea.appendChild(victory);
+    setTimeout(() => victory.remove(), 2000);
+}
+
+function showGameComplete() {
+    const complete = document.createElement('div');
+    complete.className = 'game-complete';
+    complete.innerHTML = `
+        <h1>Congratulazioni!</h1>
+        <p>Hai completato l'avventura di Martin!</p>
+        <button onclick="restartGame()">Gioca Ancora</button>
+    `;
+    gameArea.appendChild(complete);
+}
+
+// Aggiorna la funzione startGame per supportare la modalità storia
+const originalStartGame = startGame;
+startGame = function() {
+    originalStartGame();
+    if (isStoryMode) {
+        // Aggiungi listener per il progresso della storia
+        const checkProgress = setInterval(() => {
+            if (!isGameRunning) {
+                clearInterval(checkProgress);
+                return;
+            }
+            checkStoryProgress();
+        }, 1000);
+    }
+};
+
+// Costanti multiplayer
+const MULTIPLAYER_STATES = {
+    WAITING: 'waiting',
+    PLAYING: 'playing',
+    FINISHED: 'finished'
+};
+
+// Variabili multiplayer
+let isMultiplayerMode = false;
+let multiplayerState = MULTIPLAYER_STATES.WAITING;
+let players = new Map(); // Mappa dei giocatori connessi
+let localPlayerId = null;
+
+// Funzione per iniziare la modalità multiplayer
+function startMultiplayerMode() {
+    isMultiplayerMode = true;
+    multiplayerState = MULTIPLAYER_STATES.WAITING;
+    showMultiplayerLobby();
+}
+
+function showMultiplayerLobby() {
+    const lobby = document.createElement('div');
+    lobby.className = 'multiplayer-lobby';
+    lobby.innerHTML = `
+        <h2>Lobby Multiplayer</h2>
+        <div class="player-list"></div>
+        <button id="startMultiplayerGame" disabled>In attesa di altri giocatori...</button>
+    `;
+    gameArea.appendChild(lobby);
+    
+    // Simula la connessione di altri giocatori (in una versione reale useremmo WebSocket)
+    simulateMultiplayerConnections();
+}
+
+function simulateMultiplayerConnections() {
+    // Aggiungi il giocatore locale
+    localPlayerId = 'player1';
+    addPlayer(localPlayerId, 'Tu');
+    
+    // Simula l'arrivo di altri giocatori
+    setTimeout(() => {
+        addPlayer('player2', 'Giocatore 2');
+    }, 2000);
+    
+    setTimeout(() => {
+        addPlayer('player3', 'Giocatore 3');
+        document.getElementById('startMultiplayerGame').disabled = false;
+        document.getElementById('startMultiplayerGame').textContent = 'Inizia Partita';
+        document.getElementById('startMultiplayerGame').onclick = startMultiplayerGame;
+    }, 4000);
+}
+
+function addPlayer(id, name) {
+    players.set(id, {
+        name: name,
+        score: 0,
+        x: Math.random() * (window.innerWidth - 160),
+        isReady: true
+    });
+    
+    updatePlayerList();
+}
+
+function updatePlayerList() {
+    const playerList = document.querySelector('.player-list');
+    if (!playerList) return;
+    
+    playerList.innerHTML = '';
+    players.forEach((player, id) => {
+        const playerElement = document.createElement('div');
+        playerElement.className = 'player-item';
+        playerElement.innerHTML = `
+            <span>${player.name}</span>
+            <span class="ready-status">${player.isReady ? '✓' : '...'}</span>
+        `;
+        playerList.appendChild(playerElement);
+    });
+}
+
+function startMultiplayerGame() {
+    document.querySelector('.multiplayer-lobby')?.remove();
+    multiplayerState = MULTIPLAYER_STATES.PLAYING;
+    
+    // Inizializza il gioco multiplayer
+    startGame();
+    
+    // Aggiungi gli altri giocatori
+    players.forEach((player, id) => {
+        if (id !== localPlayerId) {
+            createOtherPlayer(id, player);
+        }
+    });
+}
+
+function createOtherPlayer(id, playerData) {
+    const otherPlayer = document.createElement('div');
+    otherPlayer.className = 'other-player';
+    otherPlayer.id = `player-${id}`;
+    otherPlayer.style.left = playerData.x + 'px';
+    gameArea.appendChild(otherPlayer);
+    
+    // Crea il nome del giocatore
+    const nameTag = document.createElement('div');
+    nameTag.className = 'player-name-tag';
+    nameTag.textContent = playerData.name;
+    otherPlayer.appendChild(nameTag);
+}
+
+// Aggiorna la funzione updateItems per il multiplayer
+const originalUpdateItems = updateItems;
+updateItems = function() {
+    originalUpdateItems();
+    
+    if (isMultiplayerMode) {
+        // Simula il movimento degli altri giocatori
+        players.forEach((player, id) => {
+            if (id !== localPlayerId) {
+                const otherPlayer = document.getElementById(`player-${id}`);
+                if (otherPlayer) {
+                    // Movimento simulato
+                    player.x += (Math.random() - 0.5) * 10;
+                    player.x = Math.max(0, Math.min(window.innerWidth - 160, player.x));
+                    otherPlayer.style.left = player.x + 'px';
+                }
+            }
+        });
+        
+        // Invia la posizione del giocatore locale (in una versione reale useremmo WebSocket)
+        broadcastPlayerPosition();
+    }
+};
+
+function broadcastPlayerPosition() {
+    // Simula l'invio della posizione (in una versione reale useremmo WebSocket)
+    const playerData = players.get(localPlayerId);
+    if (playerData) {
+        playerData.x = playerX;
+    }
+}
+
+// Aggiorna il punteggio multiplayer
+function updateMultiplayerScore(playerId, points) {
+    const playerData = players.get(playerId);
+    if (playerData) {
+        playerData.score += points;
+        updateScoreDisplay();
+    }
+}
+
+function updateScoreDisplay() {
+    if (!isMultiplayerMode) return;
+    
+    const scoreBoard = document.getElementById('scoreBoard') || createScoreBoard();
+    scoreBoard.innerHTML = '';
+    
+    // Ordina i giocatori per punteggio
+    const sortedPlayers = Array.from(players.entries())
+        .sort(([,a], [,b]) => b.score - a.score);
+    
+    sortedPlayers.forEach(([id, player]) => {
+        const scoreEntry = document.createElement('div');
+        scoreEntry.className = 'score-entry';
+        scoreEntry.innerHTML = `
+            <span>${player.name}</span>
+            <span>${player.score}</span>
+        `;
+        scoreBoard.appendChild(scoreEntry);
+    });
+}
+
+function createScoreBoard() {
+    const scoreBoard = document.createElement('div');
+    scoreBoard.id = 'scoreBoard';
+    scoreBoard.className = 'score-board';
+    gameArea.appendChild(scoreBoard);
+    return scoreBoard;
+}
+
+// Gestione fine partita multiplayer
+function endMultiplayerGame() {
+    multiplayerState = MULTIPLAYER_STATES.FINISHED;
+    
+    const results = document.createElement('div');
+    results.className = 'multiplayer-results';
+    
+    // Ordina i giocatori per punteggio
+    const sortedPlayers = Array.from(players.entries())
+        .sort(([,a], [,b]) => b.score - a.score);
+    
+    results.innerHTML = `
+        <h2>Fine Partita!</h2>
+        <div class="results-list">
+            ${sortedPlayers.map(([id, player], index) => `
+                <div class="result-item ${index === 0 ? 'winner' : ''}">
+                    <span>${index + 1}°</span>
+                    <span>${player.name}</span>
+                    <span>${player.score} punti</span>
+                </div>
+            `).join('')}
+        </div>
+        <button onclick="restartMultiplayerGame()">Gioca Ancora</button>
+    `;
+    
+    gameArea.appendChild(results);
+}
+
+function restartMultiplayerGame() {
+    document.querySelector('.multiplayer-results')?.remove();
+    players.forEach(player => player.score = 0);
+    startMultiplayerGame();
+}
