@@ -349,6 +349,7 @@ function startGame() {
     // Resetta il gioco
     score = 0;
     lives = 3;
+    isGameRunning = true;
     
     // Inizializza posizione giocatore
     const gameWidth = window.innerWidth;
@@ -365,11 +366,69 @@ function startGame() {
     
     // Avvia il loop di gioco
     console.log("Loop di gioco avviato");
-    if (typeof startGameLoop === 'function') {
-        startGameLoop();
-    } else {
-        console.error("Funzione startGameLoop non trovata");
+    startGameLoop();
+    
+    // Avvia la generazione di collezionabili e ostacoli
+    spawnCollectible();
+    spawnObstacle();
+}
+
+// Loop principale del gioco
+let animationFrame = null;
+
+function startGameLoop() {
+    console.log("Inizializzazione loop di gioco");
+    
+    // Cancella eventuali loop precedenti
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
     }
+    
+    function gameLoop() {
+        if (!isGameRunning) {
+            cancelAnimationFrame(animationFrame);
+            return;
+        }
+        
+        // Aggiorna la posizione del giocatore
+        movePlayer();
+        
+        // Continua il loop
+        animationFrame = requestAnimationFrame(gameLoop);
+    }
+    
+    // Avvia il loop
+    animationFrame = requestAnimationFrame(gameLoop);
+}
+
+// Funzione per muovere il giocatore
+function movePlayer() {
+    if (!isGameRunning) return;
+    
+    let moved = false;
+    
+    if (keysPressed.left && playerX > 0) {
+        playerX -= playerSpeed;
+        moved = true;
+        playerDirection = 'left';
+    }
+    if (keysPressed.right && playerX < window.innerWidth - 160) {
+        playerX += playerSpeed;
+        moved = true;
+        playerDirection = 'right';
+    }
+    
+    // Aggiorna lo stato di movimento
+    if (moved !== isMoving) {
+        isMoving = moved;
+        updatePlayerAnimation();
+    }
+    
+    // Aggiorna la posizione di Martin
+    if (player) player.style.left = playerX + "px";
+    
+    // Aggiorna la posizione del cane
+    updateDogPosition();
 }
 
 // Funzione per aggiornare le vite visualizzate
@@ -573,19 +632,6 @@ function movePlayer() {
     hitboxElement.style.width = playerWidth + "px";
     hitboxElement.style.height = "100px";
   }
-}
-
-// Avvia il loop di animazione
-let animationFrame = null;
-function startGameLoop() {
-  if (animationFrame) cancelAnimationFrame(animationFrame);
-  
-  function gameLoop() {
-    movePlayer();
-    animationFrame = requestAnimationFrame(gameLoop);
-  }
-  
-  animationFrame = requestAnimationFrame(gameLoop);
 }
 
 function updateDogPosition() {
