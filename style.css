@@ -15,9 +15,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url('images/MartinUIBackground.png');
+    background-image: url('./images/MartinUIBackground.png');
     background-size: cover;
     background-position: center;
+    z-index: 1000;
 }
 
 #playButton {
@@ -115,5 +116,31 @@ body {
 .move-right-icon {
     border-width: 20px 0 20px 32px;
     border-color: transparent transparent transparent #ffffff;
+}
+
+/* Stili per player e dog */
+#player {
+    position: absolute;
+    bottom: 10px;
+    left: 320px;
+    width: 160px;
+    height: 200px;
+    background-image: url('./images/Martin.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    z-index: 10;
+}
+
+#dog {
+    position: absolute;
+    bottom: 30px;
+    width: 40px;
+    height: 40px;
+    background-image: url('./images/Dog.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 5;
 }
   

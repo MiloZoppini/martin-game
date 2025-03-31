@@ -336,29 +336,44 @@ function setupMovementControls() {
 
 // Funzione per avviare il gioco
 function startGame() {
-  menuScreen.style.display = "none";
-  gameArea.style.display = "block";
-  
-  // Resetta il gioco
-  score = 0;
-  lives = 3;
-  playerX = window.innerWidth / 2;
-  dogX = playerX - 50;
-  updateScore();
-  updateLives();
-  
-  // Avvia il loop di gioco
-  startGameLoop();
+    console.log("Avvio del gioco...");
+    menuScreen.style.display = "none";
+    gameArea.style.display = "block";
+    
+    // Resetta il gioco
+    score = 0;
+    lives = 3;
+    
+    // Inizializza posizione giocatore
+    const gameWidth = window.innerWidth;
+    playerX = gameWidth / 2 - 80; // Metà schermo meno metà larghezza del player
+    dogX = playerX - 50;
+    
+    // Posiziona il player e il cane
+    if (player) player.style.left = playerX + "px";
+    if (dog) dog.style.left = dogX + "px";
+    
+    // Aggiorna interfaccia
+    updateScore();
+    updateLives();
+    
+    // Avvia il loop di gioco
+    console.log("Loop di gioco avviato");
+    if (typeof startGameLoop === 'function') {
+        startGameLoop();
+    } else {
+        console.error("Funzione startGameLoop non trovata");
+    }
 }
 
 // Funzione per aggiornare le vite visualizzate
 function updateLives() {
-  livesDisplay.innerHTML = "";
-  for (let i = 0; i < lives; i++) {
-    const heart = document.createElement("span");
-    heart.innerHTML = "❤️";
-    heart.classList.add("heart");
-    livesDisplay.appendChild(heart);
+  if (livesDisplay) {
+    let heartsDisplay = "";
+    for (let i = 0; i < lives; i++) {
+      heartsDisplay += "❤️";
+    }
+    livesDisplay.textContent = heartsDisplay;
   }
 }
 
@@ -605,8 +620,9 @@ function formatNumber(num) {
 
 // Funzione per aggiornare il punteggio
 function updateScore() {
-  scoreDisplay.textContent = `Punteggio: ${formatNumber(score)}€`;
-  checkShopAvailability();
+  if (scoreDisplay) {
+    scoreDisplay.textContent = "Score: " + score;
+  }
 }
 
 // Tipi di denaro raccoglibile
@@ -1202,4 +1218,32 @@ function createPowerUpButton(type) {
 }
 
 // Inizializza il gioco all'avvio
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM caricato, inizializzazione gioco...");
+    // Assicuriamoci che tutti gli elementi esistano
+    if (!menuScreen || !gameArea || !playButton) {
+        console.error("Elementi essenziali mancanti:", {
+            menuScreen: !!menuScreen,
+            gameArea: !!gameArea,
+            playButton: !!playButton
+        });
+        return;
+    }
+    
+    // Event listener per il pulsante play
+    if (playButton) {
+        console.log("Aggiungo event listener al pulsante play");
+        playButton.addEventListener("click", function(e) {
+            console.log("Pulsante play cliccato");
+            startGame();
+        });
+    }
+    
+    // Mostra il menu e nascondi l'area di gioco
+    menuScreen.style.display = "flex";
+    gameArea.style.display = "none";
+    
+    if (typeof initGame === 'function') {
+        initGame();
+    }
+});
