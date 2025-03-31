@@ -59,6 +59,12 @@ const powerUpTypes = {
 // Rileva se il dispositivo è touch
 function detectTouchDevice() {
   isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+  
+  console.log("Rilevamento dispositivo touch:", { 
+    ontouchstart: 'ontouchstart' in window,
+    maxTouchPoints: navigator.maxTouchPoints,
+    msMaxTouchPoints: navigator.msMaxTouchPoints 
+  });
 }
 
 // Aggiungi questa variabile in cima al file, dopo le altre variabili
@@ -1220,6 +1226,10 @@ function createPowerUpButton(type) {
 // Inizializza il gioco all'avvio
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM caricato, inizializzazione gioco...");
+    // Rileva se il dispositivo è touch
+    detectTouchDevice();
+    console.log("È un dispositivo touch:", isTouchDevice);
+    
     // Assicuriamoci che tutti gli elementi esistano
     if (!menuScreen || !gameArea || !playButton) {
         console.error("Elementi essenziali mancanti:", {
@@ -1230,13 +1240,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Event listener per il pulsante play
+    // Event listener per il pulsante play (sia click che touch)
     if (playButton) {
         console.log("Aggiungo event listener al pulsante play");
-        playButton.addEventListener("click", function(e) {
-            console.log("Pulsante play cliccato");
-            startGame();
-        });
+        // Rimuovi event listener esistenti per sicurezza
+        playButton.removeEventListener("click", startGame);
+        playButton.removeEventListener("touchstart", handlePlayTouch);
+        
+        // Aggiungi event listener per mouse
+        playButton.addEventListener("click", startGame);
+        
+        // Aggiungi event listener per touch
+        playButton.addEventListener("touchstart", handlePlayTouch);
     }
     
     // Mostra il menu e nascondi l'area di gioco
@@ -1247,3 +1262,10 @@ document.addEventListener('DOMContentLoaded', function() {
         initGame();
     }
 });
+
+// Funzione per gestire il touch sul pulsante play
+function handlePlayTouch(e) {
+    console.log("Touch rilevato sul pulsante play");
+    e.preventDefault(); // Previeni eventi click duplicati
+    startGame();
+}

@@ -33,9 +33,10 @@ body {
     align-items: center;
     transition: transform 0.2s;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    -webkit-tap-highlight-color: transparent; /* Rimuove l'effetto tap su iOS */
 }
 
-#playButton:hover {
+#playButton:hover, #playButton:active {
     transform: scale(1.1);
 }
 
