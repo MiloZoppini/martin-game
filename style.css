@@ -1,52 +1,180 @@
 body {
     margin: 0;
     padding: 0;
-    width: 100vw;
-    height: 100vh;
     overflow: hidden;
+    font-family: Arial, sans-serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 #menuScreen {
-    width: 100vw;
-    height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
+    width: 100vw;
+    height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-image: url('./images/MartinUIBackground.png');
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><rect width="1000" height="1000" fill="%234A90E2"/><circle cx="800" cy="200" r="100" fill="yellow"/><path d="M0,700 Q250,600 500,700 T1000,700 L1000,1000 L0,1000 Z" fill="%234CAF50"/></svg>');
     background-size: cover;
     background-position: center;
-    z-index: 1000;
+    z-index: 100;
+}
+
+h1 {
+    color: white;
+    font-size: 48px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 40px;
 }
 
 #playButton {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.9);
     border: none;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     transition: transform 0.2s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    -webkit-tap-highlight-color: transparent; /* Rimuove l'effetto tap su iOS */
+    -webkit-tap-highlight-color: transparent;
 }
 
-#playButton:hover, #playButton:active {
+#playButton:hover,
+#playButton:active {
     transform: scale(1.1);
+    background: white;
 }
 
 .play-icon {
     width: 0;
     height: 0;
-    border-style: solid;
-    border-width: 25px 0 25px 40px;
-    border-color: transparent transparent transparent #333;
+    border-left: 30px solid #4CAF50;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
     margin-left: 10px;
+}
+
+#gameArea {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><rect width="1000" height="1000" fill="%234A90E2"/><path d="M0,700 Q250,600 500,700 T1000,700 L1000,1000 L0,1000 Z" fill="%234CAF50"/></svg>');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    position: relative;
+}
+
+#player {
+    position: absolute;
+    bottom: 10px;
+    left: 320px;
+    width: 160px;
+    height: 200px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><circle cx="50" cy="40" r="35" fill="%23FFB6C1"/><rect x="15" y="75" width="70" height="60" fill="%233F51B5"/><circle cx="35" cy="35" r="5" fill="black"/><circle cx="65" cy="35" r="5" fill="black"/><path d="M35,50 Q50,60 65,50" stroke="black" fill="none" stroke-width="3"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 10;
+}
+
+#dog {
+    position: absolute;
+    bottom: 30px;
+    width: 40px;
+    height: 40px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23A0522D"/><circle cx="35" cy="45" r="5" fill="black"/><circle cx="65" cy="45" r="5" fill="black"/><ellipse cx="50" cy="60" rx="15" ry="10" fill="%238B4513"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 5;
+}
+
+.collectible {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23FFD700" stroke="%23DAA520" stroke-width="5"/><circle cx="50" cy="50" r="35" fill="%23DAA520"/><text x="50" y="65" font-size="30" text-anchor="middle" fill="%23FFD700">€</text></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    animation: rotate 2s linear infinite;
+}
+
+.obstacle {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,5 95,95 5,95" fill="%23FF4444" stroke="%23CC0000" stroke-width="5"/><text x="50" y="85" font-size="50" text-anchor="middle" fill="white">!</text></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+}
+
+#score {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 20;
+}
+
+#lives {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    z-index: 20;
+}
+
+.control-button {
+    position: fixed;
+    bottom: 20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 50%;
+    z-index: 30;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#moveLeftButton {
+    left: 20px;
+}
+
+#moveRightButton {
+    right: 20px;
+}
+
+.control-button:active {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes damage {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: gold;
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 /* Stili essenziali per il gioco */

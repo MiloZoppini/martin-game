@@ -1,4 +1,4 @@
-// Elementi DOM essenziali
+// Elementi DOM
 const gameArea = document.getElementById("gameArea");
 const player = document.getElementById("player");
 const dog = document.getElementById("dog");
@@ -14,6 +14,11 @@ const shopOverlay = document.getElementById("shopOverlay");
 const closeShopButton = document.querySelector(".close-shop");
 const betaTestButton = document.getElementById("betaTestButton");
 
+// Costanti di gioco
+const COLLECTIBLE_SPAWN_RATE = 2000;
+const OBSTACLE_SPAWN_RATE = 3000;
+const FALL_SPEED = 3;
+
 // Variabili di gioco
 let score = 0;
 let lives = 3;
@@ -24,8 +29,7 @@ let keysPressed = {
     left: false,
     right: false
 };
-const speed = 5;
-let playerSpeed = speed;
+let playerSpeed = 5;
 let playerDirection = 'right';
 let isMoving = false;
 let isGameRunning = false;
@@ -34,191 +38,10 @@ let isTouchDevice = false;
 let isSuperMode = false; // Stato modalità super
 let superModeTimer = null; // Timer per la modalità super
 let lastMillion = 0; // Per tenere traccia dell'ultimo milione raggiunto
-
-const powerUpTypes = {
-  SPEED: {
-    name: 'speed',
-    cost: 25000,
-    duration: 10000,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#FF5722" d="M13.75 9L10 2L6.25 9H8.5V13H11.5V9H13.75M12 14C8.69 14 6 16.69 6 20H18C18 16.69 15.31 14 12 14Z"/></svg>'
-  },
-  SHIELD: {
-    name: 'shield',
-    cost: 35000,
-    duration: 8000,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#2196F3" d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"/></svg>'
-  },
-  MAGNET: {
-    name: 'magnet',
-    cost: 45000,
-    duration: 12000,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#F44336" d="M3,7V13A9,9 0 0,0 12,22A9,9 0 0,0 21,13V7H17V13A5,5 0 0,1 12,18A5,5 0 0,1 7,13V7M17,5H21V2H3V5H7V2H17V5Z"/></svg>'
-  }
-};
-
-// Rileva se il dispositivo è touch
-function detectTouchDevice() {
-    isTouchDevice = ('ontouchstart' in window) || 
-                   (navigator.maxTouchPoints > 0) || 
-                   (navigator.msMaxTouchPoints > 0);
-    console.log("Dispositivo touch:", isTouchDevice);
-}
-
-// Aggiungi questa variabile in cima al file, dopo le altre variabili
-const DEBUG_MODE = false; // Imposta a true per visualizzare la hitbox
-
-// Crea l'elemento della hitbox se in debug mode
-let hitboxElement = null;
-if (DEBUG_MODE) {
-  hitboxElement = document.createElement("div");
-  hitboxElement.style.position = "absolute";
-  hitboxElement.style.border = "2px solid red";
-  hitboxElement.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
-  hitboxElement.style.zIndex = "15";
-  hitboxElement.style.pointerEvents = "none";
-  gameArea.appendChild(hitboxElement);
-}
-
-// Funzione per iniziare la modalità super
-function startSuperMode() {
-  isSuperMode = true;
-  isInvulnerable = true;
-  playerSpeed = speed * 2; // Raddoppia la velocità
-  
-  // Cambia l'immagine del player
-  player.style.backgroundImage = "url('images/MuscleMartin.png')";
-  
-  // Crea l'effetto tremolio
-  startScreenShake();
-  
-  // Imposta il timer per terminare la modalità super
-  if (superModeTimer) clearTimeout(superModeTimer);
-  superModeTimer = setTimeout(() => {
-    endSuperMode();
-  }, 10000); // 10 secondi
-  
-  // Visualizza un timer sullo schermo
-  showSuperModeTimer(10);
-}
-
-// Funzione per terminare la modalità super
-function endSuperMode() {
-  isSuperMode = false;
-  isInvulnerable = false;
-  playerSpeed = speed; // Torna alla velocità normale
-  
-  // Reimposta l'immagine del player
-  player.style.backgroundImage = "url('images/Martin.png')";
-  
-  // Interrompi l'effetto tremolio
-  stopScreenShake();
-  
-  // Rimuovi il timer sullo schermo
-  removeSuperModeTimer();
-}
-
-// Funzione per creare l'effetto tremolio
-function startScreenShake() {
-  if (!gameArea.shakeInterval) {
-    gameArea.shakeInterval = setInterval(() => {
-      const xPos = Math.random() * 6 - 3;
-      const yPos = Math.random() * 6 - 3;
-      gameArea.style.transform = `translate(${xPos}px, ${yPos}px)`;
-    }, 50);
-  }
-}
-
-// Funzione per interrompere l'effetto tremolio
-function stopScreenShake() {
-  if (gameArea.shakeInterval) {
-    clearInterval(gameArea.shakeInterval);
-    gameArea.shakeInterval = null;
-    gameArea.style.transform = 'translate(0, 0)';
-  }
-}
-
-// Funzione per mostrare il timer della modalità super
-function showSuperModeTimer(seconds) {
-  removeSuperModeTimer(); // Rimuovi timer esistenti
-  
-  const timerElement = document.createElement("div");
-  timerElement.id = "superModeTimer";
-  timerElement.style.position = "absolute";
-  timerElement.style.top = "60px";
-  timerElement.style.left = "50%";
-  timerElement.style.transform = "translateX(-50%)";
-  timerElement.style.backgroundColor = "rgba(255, 255, 0, 0.7)";
-  timerElement.style.color = "#CC0000";
-  timerElement.style.padding = "5px 15px";
-  timerElement.style.borderRadius = "20px";
-  timerElement.style.fontWeight = "bold";
-  timerElement.style.fontSize = "20px";
-  timerElement.style.zIndex = "50";
-  timerElement.textContent = `SUPER: ${seconds}s`;
-  gameArea.appendChild(timerElement);
-  
-  // Aggiorna il timer ogni secondo
-  let timeLeft = seconds;
-  const countdownInterval = setInterval(() => {
-    timeLeft--;
-    if (timeLeft <= 0) {
-      clearInterval(countdownInterval);
-      return;
-    }
-    if (document.getElementById("superModeTimer")) {
-      document.getElementById("superModeTimer").textContent = `SUPER: ${timeLeft}s`;
-    }
-  }, 1000);
-}
-
-// Funzione per rimuovere il timer della modalità super
-function removeSuperModeTimer() {
-  const existingTimer = document.getElementById("superModeTimer");
-  if (existingTimer) {
-    existingTimer.remove();
-  }
-}
-
-// Costanti per il gioco
-const COLLECTIBLE_SPAWN_RATE = 2000; // Ogni 2 secondi
-const OBSTACLE_SPAWN_RATE = 3000;    // Ogni 3 secondi
-const FALL_SPEED = 3;
 let collectibleInterval = null;
 let obstacleInterval = null;
 let gameItems = [];
-
-// Costanti di gioco
-const POWER_UP_TYPES = {
-    STAR: 'star',
-    MULTIPLIER: 'multiplier',
-    SLOW: 'slow',
-    MAGNET: 'magnet'
-};
-
-const GAME_LEVELS = {
-    1: { speed: 3, spawnRate: 2000, obstacleRate: 3000, powerUpChance: 0.1 },
-    2: { speed: 4, spawnRate: 1800, obstacleRate: 2800, powerUpChance: 0.15 },
-    3: { speed: 5, spawnRate: 1600, obstacleRate: 2600, powerUpChance: 0.2 },
-    4: { speed: 6, spawnRate: 1400, obstacleRate: 2400, powerUpChance: 0.25 },
-    5: { speed: 7, spawnRate: 1200, obstacleRate: 2200, powerUpChance: 0.3 }
-};
-
-// Variabili di stato
-let currentLevel = 1;
-let currentPowerUp = null;
-let isInvincible = false;
-let scoreMultiplier = 1;
-let isMagnetActive = false;
-let gameSpeed = GAME_LEVELS[1].speed;
-
-// Sistema audio
-const AUDIO = {
-    background: new Audio('./sounds/background.mp3'),
-    collect: new Audio('./sounds/collect.mp3'),
-    powerUp: new Audio('./sounds/powerup.mp3'),
-    hit: new Audio('./sounds/hit.mp3'),
-    levelUp: new Audio('./sounds/levelup.mp3')
-};
+let animationFrame = null;
 
 // Funzione per avviare il gioco
 function startGame() {
@@ -325,7 +148,6 @@ function spawnObstacle() {
     gameItems.push(item);
 }
 
-// Aggiorna il loop di gioco per includere gli items
 function startGameLoop() {
     console.log("Inizializzazione loop di gioco");
     
@@ -339,51 +161,56 @@ function startGameLoop() {
             return;
         }
         
-        // Aggiorna la posizione del giocatore
         movePlayer();
-        
-        // Aggiorna gli items
         updateItems();
         
-        // Continua il loop
         animationFrame = requestAnimationFrame(gameLoop);
     }
     
     animationFrame = requestAnimationFrame(gameLoop);
 }
 
+function movePlayer() {
+    if (!isGameRunning) return;
+    
+    let moved = false;
+    
+    if (keysPressed.left && playerX > 0) {
+        playerX -= playerSpeed;
+        moved = true;
+        playerDirection = 'left';
+    }
+    if (keysPressed.right && playerX < window.innerWidth - 160) {
+        playerX += playerSpeed;
+        moved = true;
+        playerDirection = 'right';
+    }
+    
+    if (moved !== isMoving) {
+        isMoving = moved;
+        updatePlayerAnimation();
+    }
+    
+    if (player) player.style.left = playerX + "px";
+    updateDogPosition();
+}
+
 function updateItems() {
     const itemsToRemove = [];
     
     gameItems.forEach((item, index) => {
-        // Aggiorna posizione
-        item.y += gameSpeed;
+        item.y += FALL_SPEED;
         item.element.style.top = item.y + 'px';
         
-        // Effetto magnete
-        if (isMagnetActive && item.type === 'collectible') {
-            const dx = playerX + 80 - item.x;
-            const dy = (window.innerHeight - 200) - item.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 200) {
-                item.x += dx * 0.1;
-                item.y += dy * 0.1;
-                item.element.style.left = item.x + 'px';
-            }
-        }
-        
-        // Controlla collisioni
         if (checkCollision(item)) {
             if (item.type === 'collectible') {
-                score += 10 * scoreMultiplier;
+                score += 10;
                 updateScore();
-                AUDIO.collect.play();
                 createCollectParticles(item.x, item.y);
-            } else if (item.type === 'obstacle' && !isInvincible) {
+            } else if (item.type === 'obstacle') {
                 lives--;
                 updateLives();
                 showDamageAnimation();
-                AUDIO.hit.play();
                 if (lives <= 0) {
                     gameOver();
                 }
@@ -393,13 +220,11 @@ function updateItems() {
             itemsToRemove.push(index);
         }
         
-        // Rimuovi se fuori schermo
         if (item.y > window.innerHeight) {
             itemsToRemove.push(index);
         }
     });
     
-    // Rimuovi gli items
     itemsToRemove.reverse().forEach(index => {
         const item = gameItems[index];
         item.element.remove();
@@ -417,25 +242,69 @@ function checkCollision(item) {
              playerRect.top > itemRect.bottom);
 }
 
-function gameOver() {
-    isGameRunning = false;
-    if (collectibleInterval) clearInterval(collectibleInterval);
-    if (obstacleInterval) clearInterval(obstacleInterval);
+function updatePlayerAnimation() {
+    if (!player || !dog) return;
     
-    // Rimuovi tutti gli items
-    gameItems.forEach(item => item.element.remove());
-    gameItems = [];
-    
-    // Mostra il menu
-    menuScreen.style.display = "flex";
-    gameArea.style.display = "none";
+    if (playerDirection === 'left') {
+        player.style.transform = 'scaleX(-1)';
+        dog.style.transform = 'scaleX(1)';
+    } else {
+        player.style.transform = 'scaleX(1)';
+        dog.style.transform = 'scaleX(-1)';
+    }
 }
 
-function playCollectSound() {
-    // Implementa il suono di raccolta se necessario
+function updateDogPosition() {
+    if (!dog) return;
+    
+    let targetDogX = playerDirection === 'left' ? 
+        playerX + 160 + 20 : // Il cane sta a destra
+        playerX - 60;        // Il cane sta a sinistra
+    
+    targetDogX = Math.max(0, Math.min(window.innerWidth - 40, targetDogX));
+    
+    dogX = dogX + (targetDogX - dogX) * 0.1;
+    dog.style.left = dogX + "px";
 }
 
-// Funzioni di utility
+function createCollectParticles(x, y) {
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        
+        const angle = (Math.random() * Math.PI * 2);
+        const velocity = Math.random() * 5 + 2;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        gameArea.appendChild(particle);
+        
+        let frame = 0;
+        const animate = () => {
+            frame++;
+            const newX = x + vx * frame;
+            const newY = y + vy * frame + 0.5 * frame * frame;
+            particle.style.left = newX + 'px';
+            particle.style.top = newY + 'px';
+            particle.style.opacity = 1 - frame / 30;
+            
+            if (frame < 30) {
+                requestAnimationFrame(animate);
+            } else {
+                particle.remove();
+            }
+        };
+        requestAnimationFrame(animate);
+    }
+}
+
+function showDamageAnimation() {
+    player.style.animation = 'damage 0.5s';
+    setTimeout(() => player.style.animation = '', 500);
+}
+
 function updateScore() {
     if (scoreDisplay) {
         scoreDisplay.textContent = "Score: " + score;
@@ -452,10 +321,20 @@ function updateLives() {
     }
 }
 
-// Setup controlli touch
-function setupMovementControls() {
-    if (!moveLeftButton || !moveRightButton) return;
+function gameOver() {
+    isGameRunning = false;
+    if (collectibleInterval) clearInterval(collectibleInterval);
+    if (obstacleInterval) clearInterval(obstacleInterval);
     
+    gameItems.forEach(item => item.element.remove());
+    gameItems = [];
+    
+    menuScreen.style.display = "flex";
+    gameArea.style.display = "none";
+}
+
+// Setup controlli touch
+function setupControls() {
     // Eventi touch per il pulsante sinistro
     moveLeftButton.addEventListener("touchstart", (e) => {
         e.preventDefault();
@@ -496,7 +375,7 @@ function setupMovementControls() {
     });
 }
 
-// Gestione eventi tastiera
+// Eventi tastiera
 document.addEventListener("keydown", (e) => {
     if (e.code === "KeyA" || e.code === "ArrowLeft") {
         keysPressed.left = true;
@@ -515,1235 +394,8 @@ document.addEventListener("keyup", (e) => {
     }
 });
 
-// Inizializzazione all'avvio
+// Inizializzazione
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM caricato, inizializzazione gioco...");
-    
-    // Rileva se il dispositivo è touch
-    detectTouchDevice();
-    
-    // Verifica elementi essenziali
-    if (!menuScreen || !gameArea || !playButton) {
-        console.error("Elementi essenziali mancanti:", {
-            menuScreen: !!menuScreen,
-            gameArea: !!gameArea,
-            playButton: !!playButton
-        });
-        return;
-    }
-    
-    console.log("Elementi essenziali trovati, configurazione pulsante play...");
-    
-    // Setup pulsante play (sia click che touch)
-    playButton.onclick = startGame;
-    
-    if (isTouchDevice) {
-        // Aggiungi gestione touch
-        playButton.addEventListener("touchstart", function(e) {
-            console.log("Touch rilevato sul pulsante play");
-            e.preventDefault();
-            startGame();
-        });
-    }
-    
-    // Setup controlli movimento
-    setupMovementControls();
-    
-    // Mostra menu iniziale
-    menuScreen.style.display = "flex";
-    gameArea.style.display = "none";
-    
-    console.log("Inizializzazione completata");
+    setupControls();
 });
-
-// Funzione per attivare l'animazione di danno
-function damageAnimation() {
-  isInvulnerable = true;
-  
-  // Aggiungi classe di animazione danno
-  player.classList.add("damage-animation");
-  
-  // Imposta un timer di lampeggiamento
-  let blinkCount = 0;
-  const blinkInterval = setInterval(() => {
-    player.style.opacity = player.style.opacity === "0.3" ? "1" : "0.3";
-    blinkCount++;
-    
-    if (blinkCount >= 10) {
-      clearInterval(blinkInterval);
-      player.style.opacity = "1";
-      player.classList.remove("damage-animation");
-      isInvulnerable = false;
-    }
-  }, 150);
-}
-
-// Aggiungi elementi da ufficio allo sfondo
-function createOfficeItems() {
-  const items = [
-    {
-      type: 'scrivania',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8B4513"><rect x="2" y="12" width="20" height="2"/><rect x="4" y="14" width="2" height="8"/><rect x="18" y="14" width="2" height="8"/></svg>'
-    },
-    {
-      type: 'computer',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#333"><rect x="5" y="6" width="14" height="10" rx="1"/><rect x="8" y="16" width="8" height="2"/><rect x="10" y="18" width="4" height="1"/></svg>'
-    },
-    {
-      type: 'pianta',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="9" y="15" width="6" height="6" fill="#8B4513"/><path d="M12,3 C16,5 18,8 15,15 M12,3 C8,5 6,8 9,15" stroke="#008800" stroke-width="2" fill="none"/></svg>'
-    },
-    {
-      type: 'lampada',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#666"><path d="M8,21 L16,21 L16,19 L8,19 Z M9,19 L15,19 L15,16 L9,16 Z M7,16 L17,16 C17,11 14,8 12,8 C10,8 7,11 7,16 Z M11,6 L13,6 L13,8 L11,8 Z"/></svg>'
-    }
-  ];
-
-  const itemCount = 15;
-  for (let i = 0; i < itemCount; i++) {
-    const item = document.createElement("div");
-    item.classList.add("office-item");
-    
-    // Dimensione casuale per gli elementi
-    const size = Math.random() * 50 + 30;
-    item.style.width = `${size}px`;
-    item.style.height = `${size}px`;
-    
-    // Posizione casuale
-    item.style.left = `${Math.random() * 100}%`;
-    item.style.top = `${Math.random() * 100}%`;
-    
-    // Scegli un elemento casuale dall'ufficio
-    const randomItem = items[Math.floor(Math.random() * items.length)];
-    item.style.backgroundImage = `url('data:image/svg+xml;charset=UTF-8,${encodeURIComponent(randomItem.svg)}')`;
-    
-    // Aggiungi una rotazione casuale
-    item.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
-    
-    gameArea.appendChild(item);
-  }
-}
-
-// Tipi di denaro raccoglibile
-const collectibleTypes = [
-  {
-    type: "coin",
-    value: 1000,
-    width: 30,
-    height: 30,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFD700"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6" fill="#FFA500"/><text x="12" y="16" font-size="8" text-anchor="middle" fill="#FFD700">1€</text></svg>',
-    animation: "coin-anim-1",
-    speed: 4
-  },
-  {
-    type: "banknote",
-    value: 10000,
-    width: 40,
-    height: 20,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#00FF00"><rect x="4" y="2" width="16" height="20" rx="2"/><text x="12" y="14" font-size="8" text-anchor="middle" fill="#006400">10€</text></svg>',
-    animation: "coin-anim-2",
-    speed: 5
-  },
-  {
-    type: "moneybag",
-    value: 25000,
-    width: 40,
-    height: 40,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFD700"><path d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8 -3.59,8 -8,8z"/><text x="12" y="16" font-size="8" text-anchor="middle" fill="#FFD700">25€</text></svg>',
-    animation: "coin-anim-3",
-    speed: 6
-  },
-  {
-    type: "package",
-    value: 50000,
-    width: 50,
-    height: 50,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFA500"><rect x="4" y="4" width="16" height="16" rx="2"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="#FFFFFF">50€</text></svg>',
-    animation: "coin-anim-4",
-    speed: 7
-  },
-  {
-    type: "bigbag",
-    value: 100000,
-    width: 60,
-    height: 60,
-    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFD700"><path d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8 -3.59,8 -8,8z"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="#FFD700">100€</text></svg>',
-    animation: "coin-anim-5",
-    speed: 8
-  },
-  {
-    type: "god",
-    value: 500000,
-    width: 80,
-    height: 80,
-    imgSrc: "images/God.png",
-    animation: "god-anim",
-    speed: 9
-  }
-];
-
-// Funzione per gestire le collisioni in modo più preciso
-function checkCollision(playerX, objectX, objectWidth) {
-  // Dimensioni reali del personaggio (più piccole dell'immagine)
-  const playerWidth = 50; // Larghezza effettiva del personaggio
-  const playerHeight = 50; // Altezza effettiva del personaggio (ridotta da 150 a 100)
-  const playerCenterOffset = 40; // Distanza dal bordo sinistro al centro del personaggio
-  
-  // Calcola i bordi effettivi del player
-  const playerLeft = playerX + playerCenterOffset;
-  const playerRight = playerLeft + playerWidth;
-  const playerTop = 450; // Aggiornato per matchare la nuova zona di collisione
-  const playerBottom = playerTop + playerHeight;
-  
-  // Bordi dell'oggetto
-  const objectLeft = objectX;
-  const objectRight = objectX + objectWidth;
-  
-  // Verifica se c'è una sovrapposizione orizzontale
-  return objectRight > playerLeft && objectLeft < playerRight;
-}
-
-function spawnCollectible() {
-  // Scegli un tipo di collezionabile casuale
-  const collectibleIndex = getRandomWeightedIndex();
-  const collectibleType = collectibleTypes[collectibleIndex];
-  
-  // Crea l'elemento
-  const collectible = document.createElement("div");
-  collectible.classList.add('collectible');
-  collectible.classList.add(collectibleType.animation);
-  
-  // Imposta dimensioni e grafica
-  collectible.style.width = collectibleType.width + 'px';
-  collectible.style.height = collectibleType.height + 'px';
-  
-  // Usa l'immagine o l'SVG a seconda del tipo
-  if (collectibleType.imgSrc) {
-    collectible.style.backgroundImage = `url('${collectibleType.imgSrc}')`;
-  } else {
-    collectible.style.backgroundImage = `url('data:image/svg+xml;charset=UTF-8,${encodeURIComponent(collectibleType.svg)}')`;
-  }
-  
-  // Posiziona l'elemento
-  const x = Math.floor(Math.random() * (800 - collectibleType.width));
-  collectible.style.left = x + "px";
-  gameArea.appendChild(collectible);
-
-  // Aggiungi dati del collezionabile
-  collectible.dataset.value = collectibleType.value;
-  collectible.dataset.type = collectibleType.type;
-
-  let y = 0;
-  const fall = setInterval(() => {
-    if (!isGameRunning) {
-      clearInterval(fall);
-      collectible.remove();
-      return;
-    }
-    
-    y += collectibleType.speed;
-    collectible.style.top = y + "px";
-
-    if (y > 450 && y < 500 && checkCollision(playerX, x, collectibleType.width)) {
-      score += collectibleType.value;
-      updateScore();
-      
-      let colorEffect = "#00AA00";
-      let textEffect = `+${formatNumber(collectibleType.value)}€`;
-      
-      if (collectibleType.value >= 50000 && collectibleType.value < 500000) {
-        colorEffect = "#FFD700";
-      } else if (collectibleType.value >= 500000) {
-        colorEffect = "#FF00FF";
-        textEffect = `+${formatNumber(collectibleType.value)}€ DIVINO!`;
-        showDivineEffect();
-      }
-      
-      createParticleEffect(x + collectibleType.width/2, y, colorEffect, textEffect);
-      clearInterval(fall);
-      collectible.remove();
-      
-      scoreDisplay.style.transform = "scale(1.2)";
-      setTimeout(() => {
-        scoreDisplay.style.transform = "scale(1)";
-      }, 200);
-    }
-
-    if (y > 500) {
-      clearInterval(fall);
-      collectible.remove();
-    }
-  }, 20);
-
-  setTimeout(spawnCollectible, Math.random() * 800 + 400);
-}
-
-// Funzione per ottenere un indice pesato (gli oggetti più rari hanno meno probabilità)
-function getRandomWeightedIndex() {
-  const weights = [50, 30, 5, 10, 4, 1]; // Probabilità relative: moneta, banconota, pacco, sacco, sacco grande, god
-  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-  
-  let random = Math.random() * totalWeight;
-  
-  for (let i = 0; i < weights.length; i++) {
-    if (random < weights[i]) {
-      return i;
-    }
-    random -= weights[i];
-  }
-  
-  return 0; // default alla moneta
-}
-
-function createParticleEffect(x, y, color, text) {
-  const particleCount = 6;
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement("div");
-    particle.style.position = "absolute";
-    particle.style.width = "12px";
-    particle.style.height = "12px";
-    particle.style.backgroundColor = color;
-    particle.style.left = x + "px";
-    particle.style.top = y + "px";
-    particle.style.borderRadius = "50%";
-    particle.style.pointerEvents = "none";
-    
-    if (i === 0 && text) {
-      particle.style.backgroundColor = "transparent";
-      particle.style.color = color;
-      particle.style.fontSize = "18px";
-      particle.style.fontWeight = "bold";
-      // Formatta il numero nel testo
-      const value = parseInt(text.replace(/[^0-9]/g, ''));
-      if (!isNaN(value)) {
-        text = text.replace(value.toString(), formatNumber(value));
-      }
-      particle.textContent = text;
-      particle.style.width = "auto";
-      particle.style.height = "auto";
-    }
-    
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 3 + 1;
-    const vx = Math.cos(angle) * speed;
-    const vy = Math.sin(angle) * speed;
-    let opacity = 1;
-    
-    gameArea.appendChild(particle);
-    
-    const animateParticle = () => {
-      const currentX = parseFloat(particle.style.left);
-      const currentY = parseFloat(particle.style.top);
-      
-      particle.style.left = (currentX + vx) + "px";
-      particle.style.top = (currentY + vy - 1) + "px";
-      opacity -= 0.05;
-      
-      particle.style.opacity = opacity;
-      
-      if (opacity > 0) {
-        requestAnimationFrame(animateParticle);
-      } else {
-        gameArea.removeChild(particle);
-      }
-    };
-    
-    requestAnimationFrame(animateParticle);
-  }
-}
-
-function spawnObstacle() {
-  if (!isGameRunning) return;
-  
-  const obstacle = document.createElement("div");
-  obstacle.classList.add("obstacle");
-  const x = Math.floor(Math.random() * 760);
-  obstacle.style.left = x + "px";
-  gameArea.appendChild(obstacle);
-
-  let y = 0;
-  const fall = setInterval(() => {
-    if (!isGameRunning) {
-      clearInterval(fall);
-      obstacle.remove();
-      return;
-    }
-    
-    y += 8; // più veloce delle monete
-    obstacle.style.top = y + "px";
-
-    // Usa la funzione di collisione migliorata
-    if (y > 450 && y < 500 && checkCollision(playerX, x, 40) && !isInvulnerable) {
-      // Riduci una vita
-      lives--;
-      updateLives();
-      
-      // Crea effetto particellare
-      createParticleEffect(playerX + 80, 350, "#CC0000", "!");
-      
-      if (lives <= 0) {
-        // Game over
-        clearInterval(fall);
-        obstacle.remove();
-        
-        // Interrompi eventuali effetti della modalità super
-        if (isSuperMode) {
-          endSuperMode();
-        }
-        
-        let shakeCount = 0;
-        const shakeEffect = setInterval(() => {
-          gameArea.style.transform = shakeCount % 2 === 0 
-            ? 'translateX(5px)' 
-            : 'translateX(-5px)';
-          shakeCount++;
-          if (shakeCount > 10) {
-            clearInterval(shakeEffect);
-            gameArea.style.transform = 'translateX(0)';
-            
-            setTimeout(() => {
-              isGameRunning = false;
-              alert("Game Over! Hai raccolto: " + formatNumber(score) + "€");
-              
-              // Torna al menu iniziale
-              gameArea.style.display = "none";
-              menuScreen.style.display = "flex";
-            }, 100);
-          }
-        }, 50);
-      } else {
-        // Attiva l'animazione di danno
-        damageAnimation();
-        
-        // Rimuovi l'ostacolo
-        clearInterval(fall);
-        obstacle.remove();
-      }
-    } else if (y > 450 && y < 500 && checkCollision(playerX, x, 40) && isSuperMode) {
-      // In modalità super, distruggi l'ostacolo senza subire danni
-      createParticleEffect(x + 20, y, "#FFFF00", "CRUSH!");
-      clearInterval(fall);
-      obstacle.remove();
-    }
-
-    if (y > 500) {
-      clearInterval(fall);
-      obstacle.remove();
-    }
-  }, 20);
-
-  if (isGameRunning) {
-  setTimeout(spawnObstacle, Math.random() * 1 + 300);
-}
-}
-
-// Funzione per mostrare un effetto divino quando si raccoglie God
-function showDivineEffect() {
-  // Crea un overlay divino
-  const divineOverlay = document.createElement("div");
-  divineOverlay.classList.add("divine-effect");
-  gameArea.appendChild(divineOverlay);
-  
-  // Rimuovi dopo un po'
-  setTimeout(() => {
-    divineOverlay.classList.add("fade-out");
-    setTimeout(() => {
-      divineOverlay.remove();
-    }, 1000);
-  }, 1000);
-}
-
-// Funzione per spawnare il powerup
-function spawnPowerUp() {
-  if (Math.random() > GAME_LEVELS[currentLevel].powerUpChance) return;
-  
-  const type = Object.values(POWER_UP_TYPES)[Math.floor(Math.random() * 4)];
-  const powerUp = document.createElement('div');
-  powerUp.className = `power-up ${type}`;
-  const x = Math.random() * (window.innerWidth - 40);
-  powerUp.style.left = x + 'px';
-  powerUp.style.top = '0px';
-  gameArea.appendChild(powerUp);
-  
-  gameItems.push({
-      element: powerUp,
-      type: 'powerUp',
-      powerUpType: type,
-      x: x,
-      y: 0
-  });
-}
-
-function activatePowerUp(type) {
-    AUDIO.powerUp.play();
-    switch(type) {
-        case POWER_UP_TYPES.STAR:
-            isInvincible = true;
-            player.classList.add('invincible');
-            setTimeout(() => {
-                isInvincible = false;
-                player.classList.remove('invincible');
-            }, 5000);
-            break;
-            
-        case POWER_UP_TYPES.MULTIPLIER:
-            scoreMultiplier = 2;
-            setTimeout(() => scoreMultiplier = 1, 10000);
-            break;
-            
-        case POWER_UP_TYPES.SLOW:
-            const originalSpeed = gameSpeed;
-            gameSpeed = gameSpeed / 2;
-            setTimeout(() => gameSpeed = originalSpeed, 7000);
-            break;
-            
-        case POWER_UP_TYPES.MAGNET:
-            isMagnetActive = true;
-            setTimeout(() => isMagnetActive = false, 8000);
-            break;
-    }
-}
-
-// Funzione per aggiornare lo stato del bottone delle vite extra
-function updateExtraLivesButton() {
-  if (extraLivesAvailable > 0) {
-    extraLivesButton.classList.remove('disabled');
-    extraLivesButton.title = `Aggiungi una vita extra (${extraLivesAvailable} rimanenti)`;
-  } else {
-    extraLivesButton.classList.add('disabled');
-    extraLivesButton.title = "Nessuna vita extra disponibile";
-  }
-}
-
-// Funzione per aggiungere una vita extra
-function addExtraLife() {
-  if (extraLivesAvailable > 0 && lives < 5) { // Massimo 5 vite
-    lives++;
-    extraLivesAvailable--;
-    updateLives();
-    updateExtraLivesButton();
-    
-    // Effetto visivo
-    createParticleEffect(750, 300, "#ff6b6b", "❤️");
-    
-    // Effetto sonoro (se disponibile)
-    const audio = new Audio('sounds/extra-life.mp3');
-    audio.play().catch(() => {}); // Ignora errori se il file non esiste
-  }
-}
-
-// Aggiungi event listener per il bottone delle vite extra
-extraLivesButton.addEventListener('click', addExtraLife);
-
-// Funzione per controllare se il punteggio ha raggiunto un nuovo milione
-function checkShopAvailability() {
-  const currentMillion = Math.floor(score / 1000000);
-  if (currentMillion > lastMillion) {
-    lastMillion = currentMillion;
-    showShop();
-  }
-}
-
-// Funzione per mostrare lo shop
-function showShop() {
-  shop.classList.add('visible');
-}
-
-// Funzione per nascondere lo shop
-function hideShop() {
-  shop.classList.remove('visible');
-}
-
-// Funzione per aprire lo shop overlay
-function openShopOverlay() {
-  shopOverlay.classList.add('visible');
-  isGameRunning = false; // Pausa il gioco solo quando si apre l'overlay
-  
-  // Ferma il loop di animazione
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame);
-    animationFrame = null;
-  }
-}
-
-// Funzione per chiudere lo shop overlay
-function closeShopOverlay() {
-  shopOverlay.classList.remove('visible');
-  isGameRunning = true;
-  keysPressed.left = false;
-  keysPressed.right = false;
-  isMoving = false;
-  updatePlayerAnimation();
-  
-  // Riavvia il loop di animazione
-  if (!animationFrame) {
-    startGameLoop();
-  }
-}
-
-// Funzione per acquistare un item
-function purchaseItem(itemType) {
-  const prices = {
-    speed: 500000,    // Ridotto da 1M a 500K
-    shield: 1000000,  // Ridotto da 2M a 1M
-    magnet: 1500000   // Ridotto da 3M a 1.5M
-  };
-
-  if (score >= prices[itemType]) {
-    score -= prices[itemType];
-    updateScore();
-    
-    // Applica l'effetto dell'item
-    switch(itemType) {
-      case 'speed':
-        playerSpeed = speed * 1.5;
-        setTimeout(() => {
-          playerSpeed = speed;
-        }, 30000);
-        break;
-      case 'shield':
-        isInvulnerable = true;
-        setTimeout(() => {
-          isInvulnerable = false;
-        }, 20000);
-        break;
-      case 'magnet':
-        activateMagnet();
-        break;
-    }
-
-    // Effetto visivo
-    createParticleEffect(400, 300, "#4CAF50", "✨");
-    
-    // Effetto sonoro
-    const audio = new Audio('sounds/purchase.mp3');
-    audio.play().catch(() => {});
-
-    // Chiudi lo shop e riprendi il gioco
-    closeShopOverlay();
-    hideShop();
-    
-    // Riprendi il gioco e riattiva i controlli
-    isGameRunning = true;
-    
-    // Riavvia il loop di animazione
-    if (!animationFrame) {
-      startGameLoop();
-    }
-  }
-}
-
-// Funzione per attivare l'effetto magnete
-function activateMagnet() {
-  const magnetDuration = 15000;
-  const magnetStrength = 5;
-  const magnetInterval = setInterval(() => {
-    const collectibles = document.querySelectorAll('.collectible');
-    collectibles.forEach(collectible => {
-      const collectibleRect = collectible.getBoundingClientRect();
-      const playerRect = player.getBoundingClientRect();
-      
-      const dx = playerRect.left - collectibleRect.left;
-      const dy = playerRect.top - collectibleRect.top;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < 300) {
-        const angle = Math.atan2(dy, dx);
-        const x = collectibleRect.left + Math.cos(angle) * magnetStrength;
-        const y = collectibleRect.top + Math.sin(angle) * magnetStrength;
-        collectible.style.left = x + 'px';
-        collectible.style.top = y + 'px';
-      }
-    });
-  }, 16);
-
-  setTimeout(() => {
-    clearInterval(magnetInterval);
-  }, magnetDuration);
-}
-
-// Modifica gli event listener dello shop
-shopOverlay.addEventListener('click', (e) => {
-  if (e.target === shopOverlay || e.target === closeShopButton) {
-    closeShopOverlay();
-  }
-});
-
-// Correggo l'event listener per il click sugli item dello shop
-document.querySelectorAll('.shop-item-card').forEach(card => {
-  card.addEventListener('click', function() {
-    const itemType = this.dataset.item;
-    purchaseItem(itemType);
-  });
-});
-
-// Funzione per il beta testing
-function betaTestAddResources() {
-  // Aggiungi 1M di soldi
-  score += 1000000;
-updateScore();
-  
-  // Aggiungi vite extra
-  extraLivesAvailable += 3;
-  updateExtraLivesButton();
-  
-  // Effetto visivo
-  createParticleEffect(750, 50, "#4CAF50", "+1M€ & Vite!");
-  
-  // Effetto sonoro (se disponibile)
-  const audio = new Audio('sounds/coin.mp3');
-  audio.play().catch(() => {});
-}
-
-// Aggiungi event listener per il bottone di beta testing
-betaTestButton.addEventListener('click', betaTestAddResources);
-
-// Avvia il gioco dal menu invece di avviarlo direttamente
-initGame();
-
-// Modifica la funzione che crea i power-up nello shop
-function createPowerUpButton(type) {
-  const button = document.createElement('button');
-  button.classList.add('power-up-button');
-  
-  // Usa SVG invece delle immagini PNG
-  const powerUp = powerUpTypes[type];
-  button.innerHTML = powerUp.svg + `<span>${formatNumber(powerUp.cost)}€</span>`;
-  
-  button.onclick = () => purchasePowerUp(type);
-  return button;
-}
-
-// Funzione per gestire il touch sul pulsante play
-function handlePlayTouch(e) {
-    console.log("Touch rilevato sul pulsante play");
-    e.preventDefault(); // Previeni eventi click duplicati
-    startGame();
-}
-
-// Gestione del livello
-function updateLevel() {
-    const nextLevel = Math.floor(score / 100) + 1;
-    if (nextLevel <= 5 && nextLevel !== currentLevel) {
-        currentLevel = nextLevel;
-        gameSpeed = GAME_LEVELS[currentLevel].speed;
-        AUDIO.levelUp.play();
-        showLevelUpMessage();
-        updateSpawnRates();
-    }
-}
-
-function showLevelUpMessage() {
-    const message = document.createElement('div');
-    message.className = 'level-up-message';
-    message.textContent = `Livello ${currentLevel}!`;
-    gameArea.appendChild(message);
-    setTimeout(() => message.remove(), 2000);
-}
-
-// Effetti particellari
-function createCollectParticles(x, y) {
-    for (let i = 0; i < 10; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = x + 'px';
-        particle.style.top = y + 'px';
-        
-        const angle = (Math.random() * Math.PI * 2);
-        const velocity = Math.random() * 5 + 2;
-        const vx = Math.cos(angle) * velocity;
-        const vy = Math.sin(angle) * velocity;
-        
-        gameArea.appendChild(particle);
-        
-        let frame = 0;
-        const animate = () => {
-            frame++;
-            const newX = x + vx * frame;
-            const newY = y + vy * frame + 0.5 * frame * frame;
-            particle.style.left = newX + 'px';
-            particle.style.top = newY + 'px';
-            particle.style.opacity = 1 - frame / 30;
-            
-            if (frame < 30) {
-                requestAnimationFrame(animate);
-            } else {
-                particle.remove();
-            }
-        };
-        requestAnimationFrame(animate);
-    }
-}
-
-// Costanti per la storia e i boss
-const STORY_CHAPTERS = {
-    1: {
-        title: "L'Inizio dell'Avventura",
-        intro: "Martin e il suo fedele cane iniziano la loro avventura...",
-        boss: "GATTO_CATTIVO",
-        requiredScore: 100
-    },
-    2: {
-        title: "La Foresta Misteriosa",
-        intro: "Addentrandosi nella foresta, incontrano nuove sfide...",
-        boss: "GUFO_SAGGIO",
-        requiredScore: 250
-    },
-    3: {
-        title: "Le Montagne Ghiacciate",
-        intro: "Il freddo delle montagne mette alla prova i nostri eroi...",
-        boss: "YETI",
-        requiredScore: 500
-    },
-    4: {
-        title: "Il Castello nel Cielo",
-        intro: "Finalmente raggiungono il leggendario castello...",
-        boss: "RE_NUVOLA",
-        requiredScore: 1000
-    }
-};
-
-const BOSS_DATA = {
-    GATTO_CATTIVO: {
-        name: "Gatto Cattivo",
-        health: 100,
-        attacks: ["graffiata", "palla_pelo", "miagolio_sonico"],
-        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del gatto --></svg>'
-    },
-    GUFO_SAGGIO: {
-        name: "Gufo Saggio",
-        health: 150,
-        attacks: ["piuma_taglienti", "tornado", "grido_notturno"],
-        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del gufo --></svg>'
-    },
-    YETI: {
-        name: "Yeti delle Nevi",
-        health: 200,
-        attacks: ["palla_neve", "tempesta", "ruggito_gelido"],
-        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG dello yeti --></svg>'
-    },
-    RE_NUVOLA: {
-        name: "Re delle Nuvole",
-        health: 300,
-        attacks: ["fulmine", "tornado_celeste", "pioggia_stellare"],
-        sprite: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><!-- SVG del re --></svg>'
-    }
-};
-
-// Variabili di stato per la storia
-let currentChapter = 1;
-let isBossFight = false;
-let currentBoss = null;
-let bossHealth = 0;
-let isStoryMode = false;
-
-// Funzione per iniziare la modalità storia
-function startStoryMode() {
-    isStoryMode = true;
-    currentChapter = 1;
-    showChapterIntro(currentChapter);
-}
-
-function showChapterIntro(chapter) {
-    const chapterData = STORY_CHAPTERS[chapter];
-    const intro = document.createElement('div');
-    intro.className = 'chapter-intro';
-    intro.innerHTML = `
-        <h2>${chapterData.title}</h2>
-        <p>${chapterData.intro}</p>
-        <button onclick="startChapter(${chapter})">Inizia Capitolo</button>
-    `;
-    gameArea.appendChild(intro);
-}
-
-function startChapter(chapter) {
-    const chapterData = STORY_CHAPTERS[chapter];
-    document.querySelector('.chapter-intro')?.remove();
-    score = 0;
-    lives = 3;
-    startGame();
-}
-
-function checkStoryProgress() {
-    if (!isStoryMode) return;
-    
-    const currentChapterData = STORY_CHAPTERS[currentChapter];
-    if (score >= currentChapterData.requiredScore && !isBossFight) {
-        startBossFight(currentChapterData.boss);
-    }
-}
-
-function startBossFight(bossType) {
-    isBossFight = true;
-    const bossData = BOSS_DATA[bossType];
-    currentBoss = bossType;
-    bossHealth = bossData.health;
-    
-    // Ferma il normale spawn di oggetti
-    clearInterval(collectibleInterval);
-    clearInterval(obstacleInterval);
-    
-    // Crea il boss
-    const boss = document.createElement('div');
-    boss.id = 'boss';
-    boss.className = 'boss ' + bossType.toLowerCase();
-    gameArea.appendChild(boss);
-    
-    // Mostra la barra della vita del boss
-    const healthBar = document.createElement('div');
-    healthBar.id = 'bossHealth';
-    healthBar.innerHTML = `
-        <div class="health-bar">
-            <div class="health-fill"></div>
-        </div>
-        <div class="boss-name">${bossData.name}</div>
-    `;
-    gameArea.appendChild(healthBar);
-    
-    // Inizia il pattern di attacco del boss
-    startBossAttackPattern(bossType);
-}
-
-function startBossAttackPattern(bossType) {
-    const bossData = BOSS_DATA[bossType];
-    let attackIndex = 0;
-    
-    const attackInterval = setInterval(() => {
-        if (!isBossFight) {
-            clearInterval(attackInterval);
-            return;
-        }
-        
-        const attack = bossData.attacks[attackIndex];
-        executeBossAttack(attack);
-        attackIndex = (attackIndex + 1) % bossData.attacks.length;
-    }, 2000);
-}
-
-function executeBossAttack(attackType) {
-    switch(attackType) {
-        case "graffiata":
-            createSlashAttack();
-            break;
-        case "palla_pelo":
-            createHairballAttack();
-            break;
-        case "miagolio_sonico":
-            createSonicAttack();
-            break;
-        // Implementa altri attacchi qui
-    }
-}
-
-function createSlashAttack() {
-    const slash = document.createElement('div');
-    slash.className = 'boss-attack slash';
-    const bossElement = document.getElementById('boss');
-    const bossRect = bossElement.getBoundingClientRect();
-    
-    slash.style.left = bossRect.left + 'px';
-    slash.style.top = bossRect.top + 'px';
-    gameArea.appendChild(slash);
-    
-    // Animazione dell'attacco
-    const animation = slash.animate([
-        { transform: 'translateX(0) rotate(0deg)' },
-        { transform: 'translateX(300px) rotate(180deg)' }
-    ], {
-        duration: 1000,
-        easing: 'ease-out'
-    });
-    
-    animation.onfinish = () => slash.remove();
-}
-
-function damagePlayer() {
-    if (!isInvincible) {
-        lives--;
-        updateLives();
-        showDamageAnimation();
-        if (lives <= 0) {
-            gameOver();
-        }
-    }
-}
-
-function damageBoss(damage) {
-    bossHealth -= damage;
-    updateBossHealthBar();
-    
-    if (bossHealth <= 0) {
-        completeBossFight();
-    }
-}
-
-function updateBossHealthBar() {
-    const healthFill = document.querySelector('.health-fill');
-    const bossData = BOSS_DATA[currentBoss];
-    const healthPercentage = (bossHealth / bossData.health) * 100;
-    healthFill.style.width = healthPercentage + '%';
-}
-
-function completeBossFight() {
-    isBossFight = false;
-    document.getElementById('boss')?.remove();
-    document.getElementById('bossHealth')?.remove();
-    
-    // Mostra animazione di vittoria
-    showVictoryAnimation();
-    
-    // Passa al prossimo capitolo
-    currentChapter++;
-    if (STORY_CHAPTERS[currentChapter]) {
-        setTimeout(() => showChapterIntro(currentChapter), 2000);
-    } else {
-        showGameComplete();
-    }
-}
-
-function showVictoryAnimation() {
-    const victory = document.createElement('div');
-    victory.className = 'victory-message';
-    victory.textContent = 'Boss Sconfitto!';
-    gameArea.appendChild(victory);
-    setTimeout(() => victory.remove(), 2000);
-}
-
-function showGameComplete() {
-    const complete = document.createElement('div');
-    complete.className = 'game-complete';
-    complete.innerHTML = `
-        <h1>Congratulazioni!</h1>
-        <p>Hai completato l'avventura di Martin!</p>
-        <button onclick="restartGame()">Gioca Ancora</button>
-    `;
-    gameArea.appendChild(complete);
-}
-
-// Aggiorna la funzione startGame per supportare la modalità storia
-const originalStartGame = startGame;
-startGame = function() {
-    originalStartGame();
-    if (isStoryMode) {
-        // Aggiungi listener per il progresso della storia
-        const checkProgress = setInterval(() => {
-            if (!isGameRunning) {
-                clearInterval(checkProgress);
-                return;
-            }
-            checkStoryProgress();
-        }, 1000);
-    }
-};
-
-// Costanti multiplayer
-const MULTIPLAYER_STATES = {
-    WAITING: 'waiting',
-    PLAYING: 'playing',
-    FINISHED: 'finished'
-};
-
-// Variabili multiplayer
-let isMultiplayerMode = false;
-let multiplayerState = MULTIPLAYER_STATES.WAITING;
-let players = new Map(); // Mappa dei giocatori connessi
-let localPlayerId = null;
-
-// Funzione per iniziare la modalità multiplayer
-function startMultiplayerMode() {
-    isMultiplayerMode = true;
-    multiplayerState = MULTIPLAYER_STATES.WAITING;
-    showMultiplayerLobby();
-}
-
-function showMultiplayerLobby() {
-    const lobby = document.createElement('div');
-    lobby.className = 'multiplayer-lobby';
-    lobby.innerHTML = `
-        <h2>Lobby Multiplayer</h2>
-        <div class="player-list"></div>
-        <button id="startMultiplayerGame" disabled>In attesa di altri giocatori...</button>
-    `;
-    gameArea.appendChild(lobby);
-    
-    // Simula la connessione di altri giocatori (in una versione reale useremmo WebSocket)
-    simulateMultiplayerConnections();
-}
-
-function simulateMultiplayerConnections() {
-    // Aggiungi il giocatore locale
-    localPlayerId = 'player1';
-    addPlayer(localPlayerId, 'Tu');
-    
-    // Simula l'arrivo di altri giocatori
-    setTimeout(() => {
-        addPlayer('player2', 'Giocatore 2');
-    }, 2000);
-    
-    setTimeout(() => {
-        addPlayer('player3', 'Giocatore 3');
-        document.getElementById('startMultiplayerGame').disabled = false;
-        document.getElementById('startMultiplayerGame').textContent = 'Inizia Partita';
-        document.getElementById('startMultiplayerGame').onclick = startMultiplayerGame;
-    }, 4000);
-}
-
-function addPlayer(id, name) {
-    players.set(id, {
-        name: name,
-        score: 0,
-        x: Math.random() * (window.innerWidth - 160),
-        isReady: true
-    });
-    
-    updatePlayerList();
-}
-
-function updatePlayerList() {
-    const playerList = document.querySelector('.player-list');
-    if (!playerList) return;
-    
-    playerList.innerHTML = '';
-    players.forEach((player, id) => {
-        const playerElement = document.createElement('div');
-        playerElement.className = 'player-item';
-        playerElement.innerHTML = `
-            <span>${player.name}</span>
-            <span class="ready-status">${player.isReady ? '✓' : '...'}</span>
-        `;
-        playerList.appendChild(playerElement);
-    });
-}
-
-function startMultiplayerGame() {
-    document.querySelector('.multiplayer-lobby')?.remove();
-    multiplayerState = MULTIPLAYER_STATES.PLAYING;
-    
-    // Inizializza il gioco multiplayer
-    startGame();
-    
-    // Aggiungi gli altri giocatori
-    players.forEach((player, id) => {
-        if (id !== localPlayerId) {
-            createOtherPlayer(id, player);
-        }
-    });
-}
-
-function createOtherPlayer(id, playerData) {
-    const otherPlayer = document.createElement('div');
-    otherPlayer.className = 'other-player';
-    otherPlayer.id = `player-${id}`;
-    otherPlayer.style.left = playerData.x + 'px';
-    gameArea.appendChild(otherPlayer);
-    
-    // Crea il nome del giocatore
-    const nameTag = document.createElement('div');
-    nameTag.className = 'player-name-tag';
-    nameTag.textContent = playerData.name;
-    otherPlayer.appendChild(nameTag);
-}
-
-// Aggiorna la funzione updateItems per il multiplayer
-const originalUpdateItems = updateItems;
-updateItems = function() {
-    originalUpdateItems();
-    
-    if (isMultiplayerMode) {
-        // Simula il movimento degli altri giocatori
-        players.forEach((player, id) => {
-            if (id !== localPlayerId) {
-                const otherPlayer = document.getElementById(`player-${id}`);
-                if (otherPlayer) {
-                    // Movimento simulato
-                    player.x += (Math.random() - 0.5) * 10;
-                    player.x = Math.max(0, Math.min(window.innerWidth - 160, player.x));
-                    otherPlayer.style.left = player.x + 'px';
-                }
-            }
-        });
-        
-        // Invia la posizione del giocatore locale (in una versione reale useremmo WebSocket)
-        broadcastPlayerPosition();
-    }
-};
-
-function broadcastPlayerPosition() {
-    // Simula l'invio della posizione (in una versione reale useremmo WebSocket)
-    const playerData = players.get(localPlayerId);
-    if (playerData) {
-        playerData.x = playerX;
-    }
-}
-
-// Aggiorna il punteggio multiplayer
-function updateMultiplayerScore(playerId, points) {
-    const playerData = players.get(playerId);
-    if (playerData) {
-        playerData.score += points;
-        updateScoreDisplay();
-    }
-}
-
-function updateScoreDisplay() {
-    if (!isMultiplayerMode) return;
-    
-    const scoreBoard = document.getElementById('scoreBoard') || createScoreBoard();
-    scoreBoard.innerHTML = '';
-    
-    // Ordina i giocatori per punteggio
-    const sortedPlayers = Array.from(players.entries())
-        .sort(([,a], [,b]) => b.score - a.score);
-    
-    sortedPlayers.forEach(([id, player]) => {
-        const scoreEntry = document.createElement('div');
-        scoreEntry.className = 'score-entry';
-        scoreEntry.innerHTML = `
-            <span>${player.name}</span>
-            <span>${player.score}</span>
-        `;
-        scoreBoard.appendChild(scoreEntry);
-    });
-}
-
-function createScoreBoard() {
-    const scoreBoard = document.createElement('div');
-    scoreBoard.id = 'scoreBoard';
-    scoreBoard.className = 'score-board';
-    gameArea.appendChild(scoreBoard);
-    return scoreBoard;
-}
-
-// Gestione fine partita multiplayer
-function endMultiplayerGame() {
-    multiplayerState = MULTIPLAYER_STATES.FINISHED;
-    
-    const results = document.createElement('div');
-    results.className = 'multiplayer-results';
-    
-    // Ordina i giocatori per punteggio
-    const sortedPlayers = Array.from(players.entries())
-        .sort(([,a], [,b]) => b.score - a.score);
-    
-    results.innerHTML = `
-        <h2>Fine Partita!</h2>
-        <div class="results-list">
-            ${sortedPlayers.map(([id, player], index) => `
-                <div class="result-item ${index === 0 ? 'winner' : ''}">
-                    <span>${index + 1}°</span>
-                    <span>${player.name}</span>
-                    <span>${player.score} punti</span>
-                </div>
-            `).join('')}
-        </div>
-        <button onclick="restartMultiplayerGame()">Gioca Ancora</button>
-    `;
-    
-    gameArea.appendChild(results);
-}
-
-function restartMultiplayerGame() {
-    document.querySelector('.multiplayer-results')?.remove();
-    players.forEach(player => player.score = 0);
-    startMultiplayerGame();
-}
